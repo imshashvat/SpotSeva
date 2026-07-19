@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adopt-a-Spot — Part 2: Code, Screens & Testing</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink2: #3d3d3a;
+    --ink3: #72716b;
+    --surface: #ffffff;
+    --surface2: #f5f4f0;
+    --surface3: #edecea;
+    --border: rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.18);
+    --green: #2e7d52; --green-bg: #e8f5ee;
+    --teal: #0f6e56;  --teal-bg: #e1f5ee;
+    --blue: #185fa5;  --blue-bg: #e6f1fb;
+    --amber: #854f0b; --amber-bg: #faeeda;
+    --coral: #993c1d; --coral-bg: #faece7;
+    --purple: #534ab7;--purple-bg: #eeedfe;
+    --red: #a32d2d;   --red-bg: #fcebeb;
+    --radius: 10px;   --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI','Inter',Arial,sans-serif; background: var(--surface2); color: var(--ink); font-size: 15px; line-height: 1.7; }
+
+  .cover {
+    background: linear-gradient(135deg, #534ab7 0%, #993c1d 100%);
+    color: #fff; padding: 60px 60px 48px; position: relative; overflow: hidden;
+  }
+  .cover::before { content:''; position:absolute; width:400px; height:400px; border-radius:50%; border:1px solid rgba(255,255,255,0.1); top:-160px; right:-80px; }
+  .cover-badge { display:inline-block; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); border-radius:4px; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; padding:4px 10px; margin-bottom:16px; }
+  .cover h1 { font-size:36px; font-weight:700; line-height:1.2; margin-bottom:8px; }
+  .cover h1 span { opacity:0.7; font-weight:400; }
+  .cover-sub { font-size:16px; opacity:0.8; margin-bottom:24px; }
+  .cover-meta { display:flex; gap:20px; flex-wrap:wrap; font-size:13px; opacity:0.7; }
+  .cover-meta span::before { content:'◆ '; font-size:8px; vertical-align:2px; }
+
+  .page { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .toc { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px 28px; margin:28px 0; display:grid; grid-template-columns:1fr 1fr; gap:5px 28px; }
+  .toc-title { grid-column:1/-1; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink3); margin-bottom:10px; }
+  .toc a { color:var(--blue); text-decoration:none; font-size:13.5px; display:flex; align-items:center; gap:6px; padding:2px 0; }
+  .toc a:hover { text-decoration:underline; }
+  .toc-num { color:var(--ink3); font-size:11px; min-width:20px; }
+
+  .section { margin-top:44px; }
+  .section-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; padding-bottom:10px; border-bottom:2px solid var(--surface3); }
+  .section-num { background:var(--purple); color:#fff; font-size:12px; font-weight:700; border-radius:4px; padding:2px 8px; min-width:28px; text-align:center; }
+  .section-title { font-size:22px; font-weight:700; }
+
+  h3 { font-size:16px; font-weight:600; margin:22px 0 9px; color:var(--ink); }
+  h4 { font-size:14px; font-weight:600; margin:14px 0 7px; color:var(--ink2); }
+  p { margin-bottom:11px; color:var(--ink2); }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 22px; margin-bottom:14px; }
+  .card-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin:14px 0; }
+  .card-sm { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; }
+  .card-sm .label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink3); margin-bottom:3px; }
+  .card-sm .value { font-size:20px; font-weight:700; }
+
+  .badge { display:inline-block; font-size:11px; font-weight:600; padding:3px 8px; border-radius:4px; margin-right:4px; margin-bottom:4px; }
+  .badge-green { background:var(--green-bg); color:var(--green); }
+  .badge-blue  { background:var(--blue-bg);  color:var(--blue);  }
+  .badge-amber { background:var(--amber-bg); color:var(--amber); }
+  .badge-coral { background:var(--coral-bg); color:var(--coral); }
+  .badge-purple{ background:var(--purple-bg);color:var(--purple);}
+  .badge-teal  { background:var(--teal-bg);  color:var(--teal);  }
+  .badge-red   { background:var(--red-bg);   color:var(--red);   }
+
+  /* Phone mockup */
+  .phone-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:20px; margin:18px 0; }
+  .phone { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .phone-bar { padding:8px 14px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+  .phone-screen { padding:12px 14px; min-height:260px; }
+  .phone-screen .screen-title { font-size:14px; font-weight:700; margin-bottom:10px; color:var(--ink); }
+  .phone-row { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; color:var(--ink2); }
+  .phone-row:last-child { border-bottom:none; }
+  .phone-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .phone-btn { display:block; text-align:center; padding:9px; border-radius:6px; font-size:12px; font-weight:600; margin-top:10px; color:#fff; }
+  .map-block { background:linear-gradient(135deg,#c8e6c9,#bbdefb); border-radius:6px; height:110px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#555; margin-bottom:10px; }
+  .stat-row { display:flex; gap:8px; margin-bottom:10px; }
+  .stat-box { flex:1; background:var(--surface2); border-radius:6px; padding:8px; text-align:center; }
+  .stat-box .sv { font-size:18px; font-weight:700; }
+  .stat-box .sl { font-size:10px; color:var(--ink3); }
+  .badge-pill { display:inline-block; font-size:10px; padding:2px 7px; border-radius:10px; margin:2px; }
+
+  /* Code */
+  pre { background:#1e2330; color:#d4d8e8; border-radius:var(--radius-sm); padding:16px 20px; font-size:12.5px; font-family:'Fira Code','Cascadia Code',monospace; overflow-x:auto; margin:10px 0; line-height:1.65; }
+  .kw { color:#7eb8f7; }
+  .fn { color:#82cfb5; }
+  .str { color:#f0bc72; }
+  .cm { color:#6e7a9a; font-style:italic; }
+  .tp { color:#d4a8f0; }
+  .ct { color:#f9a86b; }
+
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:13.5px; }
+  th { background:var(--surface3); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; padding:9px 13px; text-align:left; color:var(--ink2); border-bottom:1px solid var(--border2); }
+  td { padding:8px 13px; border-bottom:1px solid var(--border); color:var(--ink2); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--surface2); }
+
+  .info-box { border-left:3px solid; border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:11px 15px; margin:13px 0; font-size:13.5px; }
+  .info-box.green  { border-color:var(--green);  background:var(--green-bg);  color:var(--green);  }
+  .info-box.blue   { border-color:var(--blue);   background:var(--blue-bg);   color:var(--blue);   }
+  .info-box.amber  { border-color:var(--amber);  background:var(--amber-bg);  color:var(--amber);  }
+  .info-box.purple { border-color:var(--purple); background:var(--purple-bg); color:var(--purple); }
+
+  .step-list { counter-reset:step; margin:14px 0; }
+  .step { display:flex; gap:14px; margin-bottom:12px; }
+  .step-num { background:var(--purple); color:#fff; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; margin-top:2px; }
+  .step-body strong { display:block; font-size:14px; margin-bottom:2px; }
+  .step-body span { font-size:13px; color:var(--ink3); }
+
+  .checklist { list-style:none; margin:10px 0; padding:0; }
+  .checklist li { display:flex; gap:8px; padding:5px 0; font-size:13.5px; color:var(--ink2); border-bottom:1px solid var(--border); }
+  .checklist li:last-child { border-bottom:none; }
+  .checklist li::before { content:"✓"; color:var(--green); font-weight:700; flex-shrink:0; }
+  .checklist li.warn::before { content:"⚠"; color:var(--amber); }
+  .checklist li.x::before { content:"✕"; color:var(--red); }
+
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:14px 0; }
+  @media(max-width:600px){ .two-col{ grid-template-columns:1fr; } .phone-grid{ grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-badge">Implementation Document · Part 2</div>
+  <h1>Adopt-a-Spot <span>/ Code, Screens & Testing</span></h1>
+  <p class="cover-sub">Screen-by-screen UI specs · Complete Dart code · Testing strategy · CI/CD · Deployment</p>
+  <div class="cover-meta">
+    <span>Flutter · Firebase · Clean Architecture</span>
+    <span>Continues from Part 1</span>
+    <span>Shashvat Tripathi · NIET</span>
+  </div>
+</div>
+
+<div class="page">
+
+<div class="toc">
+  <div class="toc-title">Part 2 Contents</div>
+  <a href="#s11"><span class="toc-num">11</span> Screen-by-Screen UI Specifications</a>
+  <a href="#s15"><span class="toc-num">15</span> Cloud Functions — Full Code</a>
+  <a href="#s12"><span class="toc-num">12</span> Flutter BLoC — Full Code</a>
+  <a href="#s16"><span class="toc-num">16</span> Testing Strategy</a>
+  <a href="#s13"><span class="toc-num">13</span> Domain Layer — Entities & Use Cases</a>
+  <a href="#s17"><span class="toc-num">17</span> CI/CD Pipeline</a>
+  <a href="#s14"><span class="toc-num">14</span> Data Layer — Repository Implementation</a>
+  <a href="#s18"><span class="toc-num">18</span> Deployment Checklist</a>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 11  SCREEN SPECS                               -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <span class="section-title">Screen-by-Screen UI Specifications</span>
+  </div>
+  <p>Six primary citizen screens. Each spec lists purpose, key widgets, state management hook, and navigation events.</p>
+
+  <div class="phone-grid">
+
+    <!-- MAP SCREEN -->
+    <div class="phone">
+      <div class="phone-bar" style="background:var(--teal-bg);color:var(--teal)">01 · Map Screen</div>
+      <div class="phone-screen">
+        <div class="screen-title">Nearby Spots</div>
+        <div class="map-block">🗺 Google Map · Clustered Markers</div>
+        <div class="phone-row"><span class="phone-dot" style="background:#2e7d52"></span>Clean spot (available)</div>
+        <div class="phone-row"><span class="phone-dot" style="background:#854f0b"></span>Issue reported</div>
+        <div class="phone-row"><span class="phone-dot" style="background:#534ab7"></span>Your adopted spot</div>
+        <div class="phone-row"><span class="phone-dot" style="background:#a32d2d"></span>High priority alert</div>
+        <div class="phone-btn" style="background:var(--teal)">+ Adopt a Spot</div>
+      </div>
+    </div>
+
+    <!-- SPOT DETAIL -->
+    <div class="phone">
+      <div class="phone-bar" style="background:var(--green-bg);color:var(--green)">02 · Spot Detail</div>
+      <div class="phone-screen">
+        <div class="screen-title">Bench, Sector 12 Park</div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="sv" style="color:var(--teal)">47</div><div class="sl">check-ins</div></div>
+          <div class="stat-box"><div class="sv" style="color:var(--green)">Clean</div><div class="sl">status</div></div>
+          <div class="stat-box"><div class="sv" style="color:var(--purple)">3</div><div class="sl">adopters</div></div>
+        </div>
+        <div class="phone-row">Last check-in: 2 hrs ago</div>
+        <div class="phone-row">Category: Park Furniture</div>
+        <div class="phone-row">Ward: 14 · Greater Noida</div>
+        <div class="phone-row">Open reports: 0</div>
+        <div class="phone-btn" style="background:var(--green)">Check In (100m away)</div>
+        <div class="phone-btn" style="background:var(--coral);margin-top:6px">Report Issue</div>
+      </div>
+    </div>
+
+    <!-- REPORT SCREEN -->
+    <div class="phone">
+      <div class="phone-bar" style="background:var(--coral-bg);color:var(--coral)">03 · Report Issue</div>
+      <div class="phone-screen">
+        <div class="screen-title">Report a Problem</div>
+        <div style="background:var(--surface2);border-radius:6px;height:80px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink3);margin-bottom:10px;border:1px dashed var(--border2)">📸 Tap to take photo</div>
+        <div class="phone-row" style="font-size:12px">Category</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 0">
+          <span class="badge-pill" style="background:var(--coral-bg);color:var(--coral)">Broken</span>
+          <span class="badge-pill" style="background:var(--amber-bg);color:var(--amber)">Dirty</span>
+          <span class="badge-pill" style="background:var(--green-bg);color:var(--green)">Overgrown</span>
+          <span class="badge-pill" style="background:var(--red-bg);color:var(--red)">Safety Hazard</span>
+          <span class="badge-pill" style="background:var(--surface3);color:var(--ink3)">Other</span>
+        </div>
+        <div class="phone-row" style="font-size:12px">Description (optional)</div>
+        <div style="background:var(--surface2);border-radius:4px;height:36px;margin:4px 0;border:1px solid var(--border)"></div>
+        <div style="font-size:10px;color:var(--ink3);margin:4px 0">📍 GPS: auto-attached</div>
+        <div class="phone-btn" style="background:var(--coral)">Submit · Earn +25 pts</div>
+      </div>
+    </div>
+
+    <!-- PROFILE SCREEN -->
+    <div class="phone">
+      <div class="phone-bar" style="background:var(--purple-bg);color:var(--purple)">04 · Profile</div>
+      <div class="phone-screen">
+        <div style="text-align:center;margin-bottom:10px">
+          <div style="width:48px;height:48px;border-radius:50%;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:18px;margin:0 auto 4px">ST</div>
+          <div style="font-size:14px;font-weight:600">Shashvat T.</div>
+          <div style="font-size:11px;color:var(--ink3)">Greater Noida · Ward 14</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="sv" style="color:var(--purple)">840</div><div class="sl">total pts</div></div>
+          <div class="stat-box"><div class="sv" style="color:var(--amber)">7🔥</div><div class="sl">streak</div></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;margin:8px 0 4px">Badges</div>
+        <div>
+          <span class="badge-pill" style="background:var(--amber-bg);color:var(--amber)">First Adopt 🏠</span>
+          <span class="badge-pill" style="background:var(--teal-bg);color:var(--teal)">7-Day Streak 🔥</span>
+          <span class="badge-pill" style="background:var(--purple-bg);color:var(--purple)">Reporter ⚠</span>
+        </div>
+        <div class="phone-row" style="margin-top:8px">Adopted spot: Bench · Sec 12</div>
+        <div class="phone-row">Reports submitted: 4</div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="phone">
+      <div class="phone-bar" style="background:var(--amber-bg);color:var(--amber)">05 · Leaderboard</div>
+      <div class="phone-screen">
+        <div class="screen-title">This Week · Ward 14</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <span class="badge badge-amber">Weekly</span>
+          <span class="badge" style="background:var(--surface3);color:var(--ink3)">Monthly</span>
+          <span class="badge" style="background:var(--surface3);color:var(--ink3)">All Time</span>
+        </div>
+        <div class="phone-row"><strong style="color:var(--amber);min-width:20px">🥇</strong><span style="flex:1">Priya S.</span><span style="font-weight:700">340 pts</span></div>
+        <div class="phone-row"><strong style="color:var(--ink3);min-width:20px">🥈</strong><span style="flex:1">Rahul V.</span><span style="font-weight:700">290 pts</span></div>
+        <div class="phone-row"><strong style="color:var(--coral);min-width:20px">🥉</strong><span style="flex:1">Anita R.</span><span style="font-weight:700">255 pts</span></div>
+        <div class="phone-row"><strong style="color:var(--ink3);min-width:20px">#4</strong><span style="flex:1">Shashvat T.</span><span style="font-weight:700">210 pts</span></div>
+        <div class="phone-row"><strong style="color:var(--ink3);min-width:20px">#5</strong><span style="flex:1">Deepak M.</span><span style="font-weight:700">180 pts</span></div>
+        <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:8px">Updated hourly by Cloud Function</div>
+      </div>
+    </div>
+
+    <!-- REWARDS SCREEN -->
+    <div class="phone">
+      <div class="phone-bar" style="background:var(--blue-bg);color:var(--blue)">06 · Rewards Store</div>
+      <div class="phone-screen">
+        <div class="screen-title">Your Balance: <span style="color:var(--purple)">840 pts</span></div>
+        <div class="phone-row" style="flex-direction:column;align-items:flex-start;gap:3px">
+          <div style="font-size:13px;font-weight:600">20% off — Chai Wala ☕</div>
+          <div style="font-size:11px;color:var(--ink3)">Sector 18 · Expires Jul 30</div>
+          <div><span class="badge badge-blue">100 pts</span><span class="badge badge-green">In Stock</span></div>
+        </div>
+        <div class="phone-row" style="flex-direction:column;align-items:flex-start;gap:3px">
+          <div style="font-size:13px;font-weight:600">Free samosa — Bikanervala 🥟</div>
+          <div style="font-size:11px;color:var(--ink3)">Gamma 1 · Expires Aug 15</div>
+          <div><span class="badge badge-purple">200 pts</span><span class="badge badge-green">8 left</span></div>
+        </div>
+        <div class="phone-row" style="flex-direction:column;align-items:flex-start;gap:3px">
+          <div style="font-size:13px;font-weight:600">Movie ticket — PVR Cinemas 🎬</div>
+          <div style="font-size:11px;color:var(--ink3)">Alpha Mall · Expires Aug 31</div>
+          <div><span class="badge badge-amber">500 pts</span><span class="badge badge-amber">Low stock</span></div>
+        </div>
+        <div class="phone-btn" style="background:var(--blue);margin-top:8px">Redeem Selected</div>
+      </div>
+    </div>
+
+  </div><!-- end phone-grid -->
+
+  <h3>Navigation Architecture</h3>
+  <div class="card">
+    <table>
+      <tr><th>Route</th><th>Path</th><th>Guard</th><th>Transition</th></tr>
+      <tr><td>Splash</td><td><code>/</code></td><td>None</td><td>Fade → auto-navigate based on auth state</td></tr>
+      <tr><td>Onboarding</td><td><code>/onboard</code></td><td>!isLoggedIn</td><td>Slide right</td></tr>
+      <tr><td>Home (Map)</td><td><code>/home</code></td><td>isLoggedIn</td><td>Bottom nav tab 1</td></tr>
+      <tr><td>Spot Detail</td><td><code>/spot/:id</code></td><td>isLoggedIn</td><td>Bottom sheet slide-up</td></tr>
+      <tr><td>Report</td><td><code>/report/:spotId</code></td><td>isLoggedIn</td><td>Modal full-screen</td></tr>
+      <tr><td>Leaderboard</td><td><code>/leaderboard</code></td><td>isLoggedIn</td><td>Bottom nav tab 2</td></tr>
+      <tr><td>Rewards</td><td><code>/rewards</code></td><td>isLoggedIn</td><td>Bottom nav tab 3</td></tr>
+      <tr><td>Profile</td><td><code>/profile</code></td><td>isLoggedIn</td><td>Bottom nav tab 4</td></tr>
+      <tr><td>QR Coupon</td><td><code>/coupon/:id</code></td><td>isLoggedIn + hasRedeemed</td><td>Full-screen modal</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 12  FLUTTER BLOC                               -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <span class="section-title">Flutter BLoC — Complete Code</span>
+  </div>
+
+  <h3>SpotBloc — Events, States, Bloc</h3>
+  <pre><span class="cm">// lib/presentation/bloc/spot/spot_event.dart</span>
+<span class="kw">abstract class</span> <span class="tp">SpotEvent</span> {}
+
+<span class="kw">class</span> <span class="tp">LoadNearbySpots</span> <span class="kw">extends</span> <span class="tp">SpotEvent</span> {
+  <span class="kw">final</span> <span class="tp">double</span> lat, lng;
+  <span class="kw">final</span> <span class="tp">double</span> radiusMeters;
+  <span class="tp">LoadNearbySpots</span>(<span class="kw">this</span>.lat, <span class="kw">this</span>.lng, {<span class="kw">this</span>.radiusMeters = <span class="str">500</span>});
+}
+
+<span class="kw">class</span> <span class="tp">AdoptSpot</span>   <span class="kw">extends</span> <span class="tp">SpotEvent</span> { <span class="kw">final</span> <span class="tp">String</span> spotId; <span class="tp">AdoptSpot</span>(<span class="kw">this</span>.spotId); }
+<span class="kw">class</span> <span class="tp">ReleaseSpot</span> <span class="kw">extends</span> <span class="tp">SpotEvent</span> { <span class="kw">final</span> <span class="tp">String</span> spotId; <span class="tp">ReleaseSpot</span>(<span class="kw">this</span>.spotId); }
+<span class="kw">class</span> <span class="tp">CheckInSpot</span> <span class="kw">extends</span> <span class="tp">SpotEvent</span> {
+  <span class="kw">final</span> <span class="tp">String</span> spotId;
+  <span class="kw">final</span> <span class="tp">double</span> lat, lng;
+  <span class="tp">CheckInSpot</span>(<span class="kw">this</span>.spotId, <span class="kw">this</span>.lat, <span class="kw">this</span>.lng);
+}</pre>
+
+  <pre><span class="cm">// lib/presentation/bloc/spot/spot_state.dart</span>
+<span class="kw">abstract class</span> <span class="tp">SpotState</span> {}
+
+<span class="kw">class</span> <span class="tp">SpotInitial</span>  <span class="kw">extends</span> <span class="tp">SpotState</span> {}
+<span class="kw">class</span> <span class="tp">SpotLoading</span>  <span class="kw">extends</span> <span class="tp">SpotState</span> {}
+<span class="kw">class</span> <span class="tp">SpotError</span>    <span class="kw">extends</span> <span class="tp">SpotState</span> { <span class="kw">final</span> <span class="tp">String</span> message; <span class="tp">SpotError</span>(<span class="kw">this</span>.message); }
+
+<span class="kw">class</span> <span class="tp">SpotsLoaded</span> <span class="kw">extends</span> <span class="tp">SpotState</span> {
+  <span class="kw">final</span> <span class="tp">List</span>&lt;<span class="tp">Spot</span>&gt; spots;
+  <span class="tp">SpotsLoaded</span>(<span class="kw">this</span>.spots);
+}
+
+<span class="kw">class</span> <span class="tp">AdoptionSuccess</span> <span class="kw">extends</span> <span class="tp">SpotState</span> {
+  <span class="kw">final</span> <span class="tp">int</span> pointsEarned;
+  <span class="tp">AdoptionSuccess</span>(<span class="kw">this</span>.pointsEarned);
+}
+
+<span class="kw">class</span> <span class="tp">CheckInSuccess</span> <span class="kw">extends</span> <span class="tp">SpotState</span> {
+  <span class="kw">final</span> <span class="tp">int</span> pointsEarned;
+  <span class="kw">final</span> <span class="tp">int</span> currentStreak;
+  <span class="tp">CheckInSuccess</span>(<span class="kw">this</span>.pointsEarned, <span class="kw">this</span>.currentStreak);
+}</pre>
+
+  <pre><span class="cm">// lib/presentation/bloc/spot/spot_bloc.dart</span>
+<span class="kw">class</span> <span class="tp">SpotBloc</span> <span class="kw">extends</span> <span class="tp">Bloc</span>&lt;<span class="tp">SpotEvent</span>, <span class="tp">SpotState</span>&gt; {
+  <span class="kw">final</span> <span class="tp">GetNearbySpots</span>  _getNearbySpots;
+  <span class="kw">final</span> <span class="tp">AdoptSpotUseCase</span> _adoptSpot;
+  <span class="kw">final</span> <span class="tp">CheckInUseCase</span>   _checkIn;
+
+  <span class="tp">SpotBloc</span>({
+    <span class="kw">required</span> <span class="tp">GetNearbySpots</span>  getNearbySpots,
+    <span class="kw">required</span> <span class="tp">AdoptSpotUseCase</span> adoptSpot,
+    <span class="kw">required</span> <span class="tp">CheckInUseCase</span>   checkIn,
+  }) : _getNearbySpots = getNearbySpots,
+       _adoptSpot      = adoptSpot,
+       _checkIn        = checkIn,
+       <span class="kw">super</span>(<span class="tp">SpotInitial</span>()) {
+    on&lt;<span class="tp">LoadNearbySpots</span>&gt;(_onLoad);
+    on&lt;<span class="tp">AdoptSpot</span>&gt;(_onAdopt);
+    on&lt;<span class="tp">CheckInSpot</span>&gt;(_onCheckIn);
+  }
+
+  <span class="kw">Future</span>&lt;<span class="kw">void</span>&gt; _onLoad(<span class="tp">LoadNearbySpots</span> event, <span class="tp">Emitter</span> emit) <span class="kw">async</span> {
+    emit(<span class="tp">SpotLoading</span>());
+    <span class="kw">final</span> result = <span class="kw">await</span> _getNearbySpots(
+      <span class="tp">NearbyParams</span>(lat: event.lat, lng: event.lng, radius: event.radiusMeters)
+    );
+    result.fold(
+      (failure) => emit(<span class="tp">SpotError</span>(failure.message)),
+      (spots)   => emit(<span class="tp">SpotsLoaded</span>(spots)),
+    );
+  }
+
+  <span class="kw">Future</span>&lt;<span class="kw">void</span>&gt; _onAdopt(<span class="tp">AdoptSpot</span> event, <span class="tp">Emitter</span> emit) <span class="kw">async</span> {
+    emit(<span class="tp">SpotLoading</span>());
+    <span class="kw">final</span> result = <span class="kw">await</span> _adoptSpot(<span class="tp">AdoptParams</span>(spotId: event.spotId));
+    result.fold(
+      (f)    => emit(<span class="tp">SpotError</span>(f.message)),
+      (resp) => emit(<span class="tp">AdoptionSuccess</span>(resp.pointsEarned)),
+    );
+  }
+
+  <span class="kw">Future</span>&lt;<span class="kw">void</span>&gt; _onCheckIn(<span class="tp">CheckInSpot</span> event, <span class="tp">Emitter</span> emit) <span class="kw">async</span> {
+    emit(<span class="tp">SpotLoading</span>());
+    <span class="kw">final</span> result = <span class="kw">await</span> _checkIn(
+      <span class="tp">CheckInParams</span>(spotId: event.spotId, lat: event.lat, lng: event.lng)
+    );
+    result.fold(
+      (f)    => emit(<span class="tp">SpotError</span>(f.message)),
+      (resp) => emit(<span class="tp">CheckInSuccess</span>(resp.pointsEarned, resp.streak)),
+    );
+  }
+}</pre>
+
+  <h3>ReportBloc</h3>
+  <pre><span class="cm">// lib/presentation/bloc/report/report_bloc.dart</span>
+<span class="kw">class</span> <span class="tp">ReportBloc</span> <span class="kw">extends</span> <span class="tp">Bloc</span>&lt;<span class="tp">ReportEvent</span>, <span class="tp">ReportState</span>&gt; {
+  <span class="kw">final</span> <span class="tp">SubmitReportUseCase</span> _submitReport;
+  <span class="kw">final</span> <span class="tp">FirebaseStorage</span>    _storage;
+
+  <span class="tp">ReportBloc</span>({<span class="kw">required</span> <span class="tp">SubmitReportUseCase</span> submitReport, <span class="kw">required</span> <span class="tp">FirebaseStorage</span> storage})
+    : _submitReport = submitReport, _storage = storage, <span class="kw">super</span>(<span class="tp">ReportInitial</span>()) {
+    on&lt;<span class="tp">SubmitReport</span>&gt;(_onSubmit);
+    on&lt;<span class="tp">UploadPhoto</span>&gt;(_onUpload);
+  }
+
+  <span class="kw">Future</span>&lt;<span class="kw">void</span>&gt; _onUpload(<span class="tp">UploadPhoto</span> event, <span class="tp">Emitter</span> emit) <span class="kw">async</span> {
+    emit(<span class="tp">ReportUploading</span>(progress: <span class="str">0</span>));
+    <span class="kw">final</span> ref = _storage.ref(<span class="str">'reports/${DateTime.now().millisecondsSinceEpoch}.jpg'</span>);
+    <span class="kw">final</span> task = ref.putFile(event.imageFile);
+    task.snapshotEvents.listen((snap) {
+      <span class="kw">final</span> prog = snap.bytesTransferred / snap.totalBytes;
+      emit(<span class="tp">ReportUploading</span>(progress: prog));
+    });
+    <span class="kw">final</span> url = <span class="kw">await</span> (await task).ref.getDownloadURL();
+    emit(<span class="tp">PhotoUploaded</span>(url: url));
+  }
+
+  <span class="kw">Future</span>&lt;<span class="kw">void</span>&gt; _onSubmit(<span class="tp">SubmitReport</span> event, <span class="tp">Emitter</span> emit) <span class="kw">async</span> {
+    emit(<span class="tp">ReportSubmitting</span>());
+    <span class="kw">final</span> result = <span class="kw">await</span> _submitReport(<span class="tp">ReportParams</span>(
+      spotId: event.spotId, photoUrls: event.photoUrls,
+      issueType: event.issueType, description: event.description,
+    ));
+    result.fold(
+      (f)    => emit(<span class="tp">ReportError</span>(f.message)),
+      (resp) => emit(<span class="tp">ReportSuccess</span>(reportId: resp.reportId, pointsEarned: resp.pointsEarned, aiLabel: resp.aiLabel)),
+    );
+  }
+}</pre>
+
+  <h3>Map Screen Widget</h3>
+  <pre><span class="cm">// lib/presentation/screens/map_screen.dart</span>
+<span class="kw">class</span> <span class="tp">MapScreen</span> <span class="kw">extends</span> <span class="tp">StatefulWidget</span> {
+  @<span class="kw">override</span>
+  <span class="tp">State</span>&lt;<span class="tp">MapScreen</span>&gt; createState() => _MapScreenState();
+}
+
+<span class="kw">class</span> _MapScreenState <span class="kw">extends</span> <span class="tp">State</span>&lt;<span class="tp">MapScreen</span>&gt; {
+  <span class="kw">final</span> <span class="tp">Completer</span>&lt;<span class="tp">GoogleMapController</span>&gt; _ctrl = <span class="tp">Completer</span>();
+  <span class="tp">Set</span>&lt;<span class="tp">Marker</span>&gt; _markers = {};
+
+  @<span class="kw">override</span>
+  <span class="kw">void</span> initState() {
+    <span class="kw">super</span>.initState();
+    _loadLocation();
+  }
+
+  <span class="kw">Future</span>&lt;<span class="kw">void</span>&gt; _loadLocation() <span class="kw">async</span> {
+    <span class="kw">final</span> pos = <span class="kw">await</span> <span class="tp">Geolocator</span>.getCurrentPosition();
+    context.read&lt;<span class="tp">SpotBloc</span>&gt;().add(<span class="tp">LoadNearbySpots</span>(pos.latitude, pos.longitude));
+  }
+
+  <span class="tp">Set</span>&lt;<span class="tp">Marker</span>&gt; _buildMarkers(<span class="tp">List</span>&lt;<span class="tp">Spot</span>&gt; spots) {
+    <span class="kw">return</span> spots.map((spot) => <span class="tp">Marker</span>(
+      markerId: <span class="tp">MarkerId</span>(spot.id),
+      position: <span class="tp">LatLng</span>(spot.geopoint.latitude, spot.geopoint.longitude),
+      icon: _iconForStatus(spot.status),
+      onTap: () => _showSpotSheet(spot),
+    )).toSet();
+  }
+
+  <span class="tp">BitmapDescriptor</span> _iconForStatus(<span class="tp">SpotStatus</span> s) => <span class="kw">switch</span> (s) {
+    <span class="tp">SpotStatus</span>.clean    => <span class="tp">BitmapDescriptor</span>.defaultMarkerWithHue(<span class="str">BitmapDescriptor.hueGreen</span>),
+    <span class="tp">SpotStatus</span>.issue    => <span class="tp">BitmapDescriptor</span>.defaultMarkerWithHue(<span class="str">BitmapDescriptor.hueOrange</span>),
+    <span class="tp">SpotStatus</span>.critical => <span class="tp">BitmapDescriptor</span>.defaultMarkerWithHue(<span class="str">BitmapDescriptor.hueRed</span>),
+    <span class="tp">SpotStatus</span>.adopted  => <span class="tp">BitmapDescriptor</span>.defaultMarkerWithHue(<span class="str">BitmapDescriptor.hueViolet</span>),
+  };
+
+  <span class="kw">void</span> _showSpotSheet(<span class="tp">Spot</span> spot) => showModalBottomSheet(
+    context: context,
+    builder: (_) => <span class="tp">SpotDetailSheet</span>(spot: spot),
+  );
+
+  @<span class="kw">override</span>
+  <span class="tp">Widget</span> build(<span class="tp">BuildContext</span> context) {
+    <span class="kw">return</span> <span class="tp">BlocListener</span>&lt;<span class="tp">SpotBloc</span>, <span class="tp">SpotState</span>&gt;(
+      listener: (ctx, state) {
+        <span class="kw">if</span> (state <span class="kw">is</span> <span class="tp">SpotsLoaded</span>) setState(() => _markers = _buildMarkers(state.spots));
+        <span class="kw">if</span> (state <span class="kw">is</span> <span class="tp">CheckInSuccess</span>) _showCheckInToast(ctx, state);
+      },
+      child: <span class="tp">Stack</span>(children: [
+        <span class="tp">GoogleMap</span>(
+          onMapCreated: _ctrl.complete,
+          initialCameraPosition: <span class="kw">const</span> <span class="tp">CameraPosition</span>(
+            target: <span class="tp">LatLng</span>(<span class="str">28.4744</span>, <span class="str">77.5040</span>), <span class="cm">// Greater Noida</span>
+            zoom: <span class="str">15</span>,
+          ),
+          markers: _markers,
+          myLocationEnabled: <span class="kw">true</span>,
+          myLocationButtonEnabled: <span class="kw">false</span>,
+        ),
+        <span class="kw">const</span> <span class="tp">_NearbySpotsFAB</span>(),
+      ]),
+    );
+  }
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 13  DOMAIN LAYER                               -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section" id="s13">
+  <div class="section-header">
+    <span class="section-num">13</span>
+    <span class="section-title">Domain Layer — Entities & Use Cases</span>
+  </div>
+
+  <h3>Core Entities (Pure Dart, no Firebase imports)</h3>
+  <pre><span class="cm">// lib/domain/entities/spot.dart</span>
+<span class="kw">class</span> <span class="tp">Spot</span> {
+  <span class="kw">final</span> <span class="tp">String</span>     id, name, adopterId, geohash;
+  <span class="kw">final</span> <span class="tp">GeoPoint</span>   geopoint;
+  <span class="kw">final</span> <span class="tp">SpotStatus</span> status;
+  <span class="kw">final</span> <span class="tp">String</span>     category;
+  <span class="kw">final</span> <span class="tp">int</span>        checkinsCount;
+  <span class="kw">final</span> <span class="tp">DateTime</span>   lastCheckin;
+  <span class="kw">const</span> <span class="tp">Spot</span>({<span class="kw">required this</span>.id, <span class="kw">required this</span>.name, <span class="cm">/* ... */</span>});
+}
+
+<span class="kw">enum</span> <span class="tp">SpotStatus</span> { clean, issue, critical, adopted }
+
+<span class="cm">// lib/domain/entities/report.dart</span>
+<span class="kw">class</span> <span class="tp">Report</span> {
+  <span class="kw">final</span> <span class="tp">String</span>       id, spotId, reporterId;
+  <span class="kw">final</span> <span class="tp">List</span>&lt;<span class="tp">String</span>&gt; photoUrls;
+  <span class="kw">final</span> <span class="tp">String</span>       issueType, severity, aiLabel;
+  <span class="kw">final</span> <span class="tp">ReportStatus</span> status;
+  <span class="kw">final</span> <span class="tp">DateTime</span>     createdAt;
+  <span class="kw">const</span> <span class="tp">Report</span>({<span class="kw">required this</span>.id, <span class="cm">/* ... */</span>});
+}
+
+<span class="kw">enum</span> <span class="tp">ReportStatus</span> { open, inProgress, resolved }
+
+<span class="cm">// lib/domain/entities/user_wallet.dart</span>
+<span class="kw">class</span> <span class="tp">UserWallet</span> {
+  <span class="kw">final</span> <span class="tp">String</span> userId;
+  <span class="kw">final</span> <span class="tp">int</span>    balance, lifetimeEarned, streak;
+  <span class="kw">final</span> <span class="tp">List</span>&lt;<span class="tp">String</span>&gt; badges;
+  <span class="kw">const</span> <span class="tp">UserWallet</span>({<span class="kw">required this</span>.userId, <span class="cm">/* ... */</span>});
+}</pre>
+
+  <h3>Use Cases with Either (dartz)</h3>
+  <pre><span class="cm">// lib/domain/usecases/get_nearby_spots.dart</span>
+<span class="kw">class</span> <span class="tp">GetNearbySpots</span> <span class="kw">implements</span> <span class="tp">UseCase</span>&lt;<span class="tp">List</span>&lt;<span class="tp">Spot</span>&gt;, <span class="tp">NearbyParams</span>&gt; {
+  <span class="kw">final</span> <span class="tp">SpotRepository</span> repository;
+  <span class="kw">const</span> <span class="tp">GetNearbySpots</span>(<span class="kw">this</span>.repository);
+
+  @<span class="kw">override</span>
+  <span class="tp">Future</span>&lt;<span class="tp">Either</span>&lt;<span class="tp">Failure</span>, <span class="tp">List</span>&lt;<span class="tp">Spot</span>&gt;&gt;&gt; call(<span class="tp">NearbyParams</span> params) =>
+    repository.getNearbySpots(lat: params.lat, lng: params.lng, radius: params.radius);
+}
+
+<span class="kw">class</span> <span class="tp">NearbyParams</span> {
+  <span class="kw">final</span> <span class="tp">double</span> lat, lng, radius;
+  <span class="kw">const</span> <span class="tp">NearbyParams</span>({<span class="kw">required this</span>.lat, <span class="kw">required this</span>.lng, <span class="kw">this</span>.radius = <span class="str">500</span>});
+}
+
+<span class="cm">// lib/domain/usecases/submit_report.dart</span>
+<span class="kw">class</span> <span class="tp">SubmitReportUseCase</span> <span class="kw">implements</span> <span class="tp">UseCase</span>&lt;<span class="tp">ReportResponse</span>, <span class="tp">ReportParams</span>&gt; {
+  <span class="kw">final</span> <span class="tp">ReportRepository</span> repository;
+  <span class="kw">const</span> <span class="tp">SubmitReportUseCase</span>(<span class="kw">this</span>.repository);
+
+  @<span class="kw">override</span>
+  <span class="tp">Future</span>&lt;<span class="tp">Either</span>&lt;<span class="tp">Failure</span>, <span class="tp">ReportResponse</span>&gt;&gt; call(<span class="tp">ReportParams</span> params) =>
+    repository.submitReport(params);
+}
+
+<span class="cm">// lib/domain/usecases/redeem_coupon.dart</span>
+<span class="kw">class</span> <span class="tp">RedeemCouponUseCase</span> <span class="kw">implements</span> <span class="tp">UseCase</span>&lt;<span class="tp">RedeemResponse</span>, <span class="tp">RedeemParams</span>&gt; {
+  <span class="kw">final</span> <span class="tp">RewardRepository</span> repository;
+  <span class="kw">const</span> <span class="tp">RedeemCouponUseCase</span>(<span class="kw">this</span>.repository);
+
+  @<span class="kw">override</span>
+  <span class="tp">Future</span>&lt;<span class="tp">Either</span>&lt;<span class="tp">Failure</span>, <span class="tp">RedeemResponse</span>&gt;&gt; call(<span class="tp">RedeemParams</span> params) =>
+    repository.redeemCoupon(params.rewardId);
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 14  DATA LAYER                                 -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section" id="s14">
+  <div class="section-header">
+    <span class="section-num">14</span>
+    <span class="section-title">Data Layer — Repository Implementation</span>
+  </div>
+
+  <h3>SpotRepositoryImpl — Firestore + Geohash Queries</h3>
+  <pre><span class="cm">// lib/data/repositories/spot_repository_impl.dart</span>
+<span class="kw">class</span> <span class="tp">SpotRepositoryImpl</span> <span class="kw">implements</span> <span class="tp">SpotRepository</span> {
+  <span class="kw">final</span> <span class="tp">FirebaseFirestore</span> _db;
+  <span class="kw">const</span> <span class="tp">SpotRepositoryImpl</span>(<span class="kw">this</span>._db);
+
+  @<span class="kw">override</span>
+  <span class="tp">Future</span>&lt;<span class="tp">Either</span>&lt;<span class="tp">Failure</span>, <span class="tp">List</span>&lt;<span class="tp">Spot</span>&gt;&gt;&gt; getNearbySpots({
+    <span class="kw">required</span> <span class="tp">double</span> lat, <span class="kw">required</span> <span class="tp">double</span> lng, <span class="tp">double</span> radius = <span class="str">500</span>
+  }) <span class="kw">async</span> {
+    <span class="kw">try</span> {
+      <span class="cm">// Geohash bounding box — queries without extra index</span>
+      <span class="kw">final</span> bounds = <span class="tp">Geoflutter</span>.boundingBoxCoordinates(
+        center: <span class="tp">GeoPoint</span>(lat, lng), radiusInKm: radius / <span class="str">1000</span>
+      );
+      <span class="kw">final</span> snap = <span class="kw">await</span> _db.collection(<span class="str">'spots'</span>)
+        .where(<span class="str">'geohash'</span>, isGreaterThanOrEqualTo: bounds.swHash)
+        .where(<span class="str">'geohash'</span>, isLessThanOrEqualTo: bounds.neHash)
+        .get();
+      <span class="kw">return</span> <span class="tp">Right</span>(snap.docs.map(<span class="tp">SpotModel</span>.fromDoc).toList());
+    } <span class="kw">on</span> <span class="tp">FirebaseException</span> <span class="kw">catch</span> (e) {
+      <span class="kw">return</span> <span class="tp">Left</span>(<span class="tp">ServerFailure</span>(e.message ?? <span class="str">'Firestore error'</span>));
+    }
+  }
+
+  @<span class="kw">override</span>
+  <span class="tp">Future</span>&lt;<span class="tp">Either</span>&lt;<span class="tp">Failure</span>, <span class="tp">AdoptResponse</span>&gt;&gt; adoptSpot(<span class="tp">String</span> spotId) <span class="kw">async</span> {
+    <span class="kw">try</span> {
+      <span class="kw">final</span> callable = <span class="tp">FirebaseFunctions</span>.instance.httpsCallable(<span class="str">'adoptSpot'</span>);
+      <span class="kw">final</span> result = <span class="kw">await</span> callable.call({<span class="str">'spotId'</span>: spotId});
+      <span class="kw">return</span> <span class="tp">Right</span>(<span class="tp">AdoptResponse</span>.fromMap(result.data <span class="kw">as</span> <span class="tp">Map</span>));
+    } <span class="kw">on</span> <span class="tp">FirebaseFunctionsException</span> <span class="kw">catch</span> (e) {
+      <span class="kw">return</span> <span class="tp">Left</span>(<span class="tp">ServerFailure</span>(e.message ?? <span class="str">'Function error'</span>));
+    }
+  }
+}</pre>
+
+  <h3>SpotModel — Firestore Serialization</h3>
+  <pre><span class="cm">// lib/data/models/spot_model.dart</span>
+<span class="kw">class</span> <span class="tp">SpotModel</span> <span class="kw">extends</span> <span class="tp">Spot</span> {
+  <span class="kw">const</span> <span class="tp">SpotModel</span>({<span class="kw">required super</span>.id, <span class="cm">/* ... */</span>});
+
+  <span class="kw">factory</span> <span class="tp">SpotModel</span>.fromDoc(<span class="tp">DocumentSnapshot</span> doc) {
+    <span class="kw">final</span> d = doc.data()! <span class="kw">as</span> <span class="tp">Map</span>&lt;<span class="tp">String</span>, <span class="kw">dynamic</span>&gt;;
+    <span class="kw">return</span> <span class="tp">SpotModel</span>(
+      id:             doc.id,
+      name:           d[<span class="str">'name'</span>] <span class="kw">as</span> <span class="tp">String</span>,
+      adopterId:      d[<span class="str">'adopterId'</span>] <span class="kw">as</span> <span class="tp">String</span>? ?? <span class="str">''</span>,
+      geohash:        d[<span class="str">'geohash'</span>] <span class="kw">as</span> <span class="tp">String</span>,
+      geopoint:       d[<span class="str">'geopoint'</span>] <span class="kw">as</span> <span class="tp">GeoPoint</span>,
+      status:         <span class="tp">SpotStatus</span>.values.byName(d[<span class="str">'status'</span>] <span class="kw">as</span> <span class="tp">String</span>),
+      category:       d[<span class="str">'category'</span>] <span class="kw">as</span> <span class="tp">String</span>,
+      checkinsCount:  (d[<span class="str">'checkinsCount'</span>] <span class="kw">as</span> <span class="tp">int</span>?) ?? <span class="str">0</span>,
+      lastCheckin:    (d[<span class="str">'lastCheckin'</span>] <span class="kw">as</span> <span class="tp">Timestamp</span>).toDate(),
+    );
+  }
+
+  <span class="tp">Map</span>&lt;<span class="tp">String</span>, <span class="kw">dynamic</span>&gt; toMap() => {
+    <span class="str">'name'</span>:          name,
+    <span class="str">'adopterId'</span>:     adopterId,
+    <span class="str">'geohash'</span>:       geohash,
+    <span class="str">'geopoint'</span>:      geopoint,
+    <span class="str">'status'</span>:        status.name,
+    <span class="str">'category'</span>:      category,
+    <span class="str">'checkinsCount'</span>: checkinsCount,
+    <span class="str">'lastCheckin'</span>:   <span class="tp">Timestamp</span>.fromDate(lastCheckin),
+  };
+}</pre>
+
+  <h3>Dependency Injection (get_it)</h3>
+  <pre><span class="cm">// lib/core/di/injection_container.dart</span>
+<span class="kw">final</span> sl = <span class="tp">GetIt</span>.instance;
+
+<span class="kw">Future</span>&lt;<span class="kw">void</span>&gt; init() <span class="kw">async</span> {
+  <span class="cm">// Firebase</span>
+  sl.registerLazySingleton(() => <span class="tp">FirebaseFirestore</span>.instance);
+  sl.registerLazySingleton(() => <span class="tp">FirebaseStorage</span>.instance);
+  sl.registerLazySingleton(() => <span class="tp">FirebaseFunctions</span>.instance);
+  sl.registerLazySingleton(() => <span class="tp">FirebaseAuth</span>.instance);
+
+  <span class="cm">// Repositories</span>
+  sl.registerLazySingleton&lt;<span class="tp">SpotRepository</span>&gt;(
+    () => <span class="tp">SpotRepositoryImpl</span>(sl())
+  );
+  sl.registerLazySingleton&lt;<span class="tp">ReportRepository</span>&gt;(
+    () => <span class="tp">ReportRepositoryImpl</span>(sl(), sl())
+  );
+  sl.registerLazySingleton&lt;<span class="tp">RewardRepository</span>&gt;(
+    () => <span class="tp">RewardRepositoryImpl</span>(sl())
+  );
+
+  <span class="cm">// Use Cases</span>
+  sl.registerLazySingleton(() => <span class="tp">GetNearbySpots</span>(sl()));
+  sl.registerLazySingleton(() => <span class="tp">AdoptSpotUseCase</span>(sl()));
+  sl.registerLazySingleton(() => <span class="tp">CheckInUseCase</span>(sl()));
+  sl.registerLazySingleton(() => <span class="tp">SubmitReportUseCase</span>(sl()));
+  sl.registerLazySingleton(() => <span class="tp">RedeemCouponUseCase</span>(sl()));
+
+  <span class="cm">// BLoCs</span>
+  sl.registerFactory(() => <span class="tp">SpotBloc</span>(
+    getNearbySpots: sl(), adoptSpot: sl(), checkIn: sl()
+  ));
+  sl.registerFactory(() => <span class="tp">ReportBloc</span>(submitReport: sl(), storage: sl()));
+  sl.registerFactory(() => <span class="tp">RewardBloc</span>(redeemCoupon: sl()));
+  sl.registerFactory(() => <span class="tp">AuthBloc</span>(firebaseAuth: sl()));
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 15  CLOUD FUNCTIONS CODE                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section" id="s15">
+  <div class="section-header">
+    <span class="section-num">15</span>
+    <span class="section-title">Cloud Functions — Complete TypeScript Code</span>
+  </div>
+
+  <h3>onCheckIn — GPS Validation + Points + Streak</h3>
+  <pre><span class="cm">// functions/src/checkin.ts</span>
+<span class="kw">import</span> * <span class="kw">as</span> functions <span class="kw">from</span> <span class="str">'firebase-functions'</span>;
+<span class="kw">import</span> * <span class="kw">as</span> admin    <span class="kw">from</span> <span class="str">'firebase-admin'</span>;
+<span class="kw">import</span> { <span class="tp">distanceBetween</span> } <span class="kw">from</span> <span class="str">'geofire-common'</span>;
+
+<span class="kw">const</span> db = admin.firestore();
+<span class="kw">const</span> CHECKIN_RADIUS_M = <span class="str">100</span>;
+<span class="kw">const</span> CHECKIN_POINTS   = <span class="str">10</span>;
+<span class="kw">const</span> STREAK_7_BONUS   = <span class="str">50</span>;
+<span class="kw">const</span> STREAK_30_BONUS  = <span class="str">200</span>;
+
+<span class="kw">export const</span> onCheckIn = functions.firestore
+  .document(<span class="str">'checkins/{checkinId}'</span>)
+  .onCreate(<span class="kw">async</span> (snap, ctx) => {
+    <span class="kw">const</span> { userId, spotId, geopoint } = snap.data();
+
+    <span class="cm">// 1. Fetch spot and validate proximity</span>
+    <span class="kw">const</span> spotDoc = <span class="kw">await</span> db.collection(<span class="str">'spots'</span>).doc(spotId).get();
+    <span class="kw">if</span> (!spotDoc.exists) <span class="kw">throw new</span> <span class="tp">Error</span>(<span class="str">'Spot not found'</span>);
+    <span class="kw">const</span> spot = spotDoc.data()!;
+    <span class="kw">const</span> dist = distanceBetween(
+      [geopoint.latitude, geopoint.longitude],
+      [spot.geopoint.latitude, spot.geopoint.longitude]
+    ) * <span class="str">1000</span>; <span class="cm">// km → m</span>
+    <span class="kw">if</span> (dist > CHECKIN_RADIUS_M) {
+      <span class="kw">await</span> snap.ref.update({ valid: <span class="kw">false</span>, error: <span class="str">'Too far from spot'</span> });
+      <span class="kw">return</span>;
+    }
+
+    <span class="cm">// 2. Run atomic transaction: update wallet + streak + spot</span>
+    <span class="kw">await</span> db.runTransaction(<span class="kw">async</span> (t) => {
+      <span class="kw">const</span> walletRef = db.collection(<span class="str">'wallets'</span>).doc(userId);
+      <span class="kw">const</span> wallet    = (await t.get(walletRef)).data() ?? { balance: <span class="str">0</span>, streak: <span class="str">0</span>, lastCheckin: <span class="kw">null</span> };
+
+      <span class="cm">// Streak logic</span>
+      <span class="kw">const</span> now      = <span class="kw">new</span> <span class="tp">Date</span>();
+      <span class="kw">const</span> lastDate = wallet.lastCheckin?.toDate() ?? <span class="kw">new</span> <span class="tp">Date</span>(<span class="str">0</span>);
+      <span class="kw">const</span> daysDiff = (now.getTime() - lastDate.getTime()) / (<span class="str">1000</span> * <span class="str">60</span> * <span class="str">60</span> * <span class="str">24</span>);
+      <span class="kw">const</span> newStreak = daysDiff <= <span class="str">1.5</span> ? wallet.streak + <span class="str">1</span> : <span class="str">1</span>;
+      <span class="kw">const</span> bonus     = newStreak === <span class="str">7</span> ? STREAK_7_BONUS : newStreak === <span class="str">30</span> ? STREAK_30_BONUS : <span class="str">0</span>;
+      <span class="kw">const</span> total     = CHECKIN_POINTS + bonus;
+
+      t.update(walletRef, {
+        balance:       admin.firestore.<span class="tp">FieldValue</span>.increment(total),
+        lifetimeEarned: admin.firestore.<span class="tp">FieldValue</span>.increment(total),
+        streak:         newStreak,
+        lastCheckin:    admin.firestore.<span class="tp">Timestamp</span>.now(),
+      });
+
+      t.update(db.collection(<span class="str">'spots'</span>).doc(spotId), {
+        checkinsCount: admin.firestore.<span class="tp">FieldValue</span>.increment(<span class="str">1</span>),
+        lastCheckin:   admin.firestore.<span class="tp">Timestamp</span>.now(),
+      });
+
+      t.update(snap.ref, { valid: <span class="kw">true</span>, pointsEarned: total, newStreak });
+    });
+  });</pre>
+
+  <h3>onIssueReport — Gemini Flash Classification</h3>
+  <pre><span class="cm">// functions/src/report.ts</span>
+<span class="kw">import</span> { <span class="tp">GoogleGenerativeAI</span> } <span class="kw">from</span> <span class="str">'@google/generative-ai'</span>;
+
+<span class="kw">const</span> genAI  = <span class="kw">new</span> <span class="tp">GoogleGenerativeAI</span>(process.env.GEMINI_API_KEY!);
+<span class="kw">const</span> model  = genAI.getGenerativeModel({ model: <span class="str">'gemini-1.5-flash'</span> });
+<span class="kw">const</span> REPORT_POINTS = <span class="str">25</span>;
+<span class="kw">const</span> RESOLVE_BONUS = <span class="str">50</span>;
+
+<span class="kw">export const</span> onIssueReport = functions.firestore
+  .document(<span class="str">'reports/{reportId}'</span>)
+  .onCreate(<span class="kw">async</span> (snap) => {
+    <span class="kw">const</span> { reporterId, spotId, photoUrls, issueType } = snap.data();
+
+    <span class="cm">// 1. Classify with Gemini Flash (vision)</span>
+    <span class="kw">let</span> aiLabel = issueType, severity = <span class="str">'medium'</span>;
+    <span class="kw">try</span> {
+      <span class="kw">const</span> result = <span class="kw">await</span> model.generateContent([
+        {
+          inlineData: {
+            mimeType: <span class="str">'image/jpeg'</span>,
+            data: <span class="kw">await</span> fetchImageBase64(photoUrls[<span class="str">0</span>]),
+          }
+        },
+        <span class="str">`Classify this civic issue image. Respond with JSON only:
+         {"label": "Broken bench|Fallen tree|Garbage dump|Pothole|Graffiti|Other",
+          "severity": "low|medium|high",
+          "confidence": 0.0-1.0}`</span>
+      ]);
+      <span class="kw">const</span> parsed = <span class="tp">JSON</span>.parse(result.response.text());
+      aiLabel  = parsed.label;
+      severity = parsed.severity;
+    } <span class="kw">catch</span> (e) {
+      console.error(<span class="str">'Gemini classification failed'</span>, e);
+    }
+
+    <span class="cm">// 2. Atomic: award points + update spot status + write AI label</span>
+    <span class="kw">await</span> db.runTransaction(<span class="kw">async</span> (t) => {
+      <span class="kw">const</span> walletRef = db.collection(<span class="str">'wallets'</span>).doc(reporterId);
+      t.update(walletRef, {
+        balance:        admin.firestore.<span class="tp">FieldValue</span>.increment(REPORT_POINTS),
+        lifetimeEarned: admin.firestore.<span class="tp">FieldValue</span>.increment(REPORT_POINTS),
+      });
+      t.update(db.collection(<span class="str">'spots'</span>).doc(spotId), {
+        status: severity === <span class="str">'high'</span> ? <span class="str">'critical'</span> : <span class="str">'issue'</span>,
+      });
+      t.update(snap.ref, { aiLabel, severity, pointsEarned: REPORT_POINTS, status: <span class="str">'open'</span> });
+    });
+
+    <span class="cm">// 3. Alert municipal FCM topic</span>
+    <span class="kw">await</span> admin.messaging().send({
+      topic:        <span class="str">'municipal_alerts'</span>,
+      notification: { title: <span class="str">`New ${severity} issue`</span>, body: aiLabel },
+      data:         { reportId: snap.id, spotId, severity },
+    });
+  });</pre>
+
+  <h3>onCouponRedeem — Atomic Transaction</h3>
+  <pre><span class="cm">// functions/src/rewards.ts</span>
+<span class="kw">export const</span> redeemCoupon = functions.https.onCall(<span class="kw">async</span> (data, context) => {
+  <span class="kw">if</span> (!context.auth) <span class="kw">throw new</span> functions.https.<span class="tp">HttpsError</span>(<span class="str">'unauthenticated'</span>, <span class="str">'Login required'</span>);
+  <span class="kw">const</span> { rewardId } = data;
+  <span class="kw">const</span> userId = context.auth.uid;
+
+  <span class="kw">return</span> db.runTransaction(<span class="kw">async</span> (t) => {
+    <span class="kw">const</span> rewardRef = db.collection(<span class="str">'rewards'</span>).doc(rewardId);
+    <span class="kw">const</span> walletRef = db.collection(<span class="str">'wallets'</span>).doc(userId);
+    <span class="kw">const</span> [rewardDoc, walletDoc] = <span class="kw">await</span> <span class="tp">Promise</span>.all([t.get(rewardRef), t.get(walletRef)]);
+
+    <span class="kw">const</span> reward = rewardDoc.data()!;
+    <span class="kw">const</span> wallet = walletDoc.data()!;
+
+    <span class="kw">if</span> (wallet.balance < reward.pointsCost)
+      <span class="kw">throw new</span> functions.https.<span class="tp">HttpsError</span>(<span class="str">'failed-precondition'</span>, <span class="str">'Insufficient points'</span>);
+    <span class="kw">if</span> (reward.redeemedQty >= reward.totalQty)
+      <span class="kw">throw new</span> functions.https.<span class="tp">HttpsError</span>(<span class="str">'failed-precondition'</span>, <span class="str">'Coupon sold out'</span>);
+
+    <span class="kw">const</span> couponCode = <span class="fn">generateCode</span>(); <span class="cm">// crypto random 8-char</span>
+    t.update(walletRef, { balance: admin.firestore.<span class="tp">FieldValue</span>.increment(-reward.pointsCost) });
+    t.update(rewardRef, { redeemedQty: admin.firestore.<span class="tp">FieldValue</span>.increment(<span class="str">1</span>) });
+    t.set(db.collection(<span class="str">'redemptions'</span>).doc(), {
+      userId, rewardId, couponCode, redeemedAt: admin.firestore.<span class="tp">Timestamp</span>.now(), used: <span class="kw">false</span>
+    });
+    <span class="kw">return</span> { couponCode, newBalance: wallet.balance - reward.pointsCost };
+  });
+});</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 16  TESTING                                    -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section" id="s16">
+  <div class="section-header">
+    <span class="section-num">16</span>
+    <span class="section-title">Testing Strategy</span>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>Test Pyramid</h3>
+      <div class="card" style="text-align:center;padding:20px">
+        <svg width="100%" viewBox="0 0 300 200">
+          <!-- E2E tier -->
+          <polygon points="150,10 220,60 80,60" fill="#faece7" stroke="#993c1d" stroke-width="1"/>
+          <text x="150" y="42" text-anchor="middle" font-size="11" font-weight="600" fill="#4a1b0c" font-family="Segoe UI,Arial">E2E Tests</text>
+          <text x="150" y="56" text-anchor="middle" font-size="9" fill="#993c1d" font-family="Segoe UI,Arial">~5 flows</text>
+          <!-- Integration tier -->
+          <polygon points="80,62 220,62 240,115 60,115" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+          <text x="150" y="86" text-anchor="middle" font-size="11" font-weight="600" fill="#412402" font-family="Segoe UI,Arial">Integration Tests</text>
+          <text x="150" y="102" text-anchor="middle" font-size="9" fill="#854f0b" font-family="Segoe UI,Arial">~25 widget + repo tests</text>
+          <!-- Unit tier -->
+          <polygon points="60,117 240,117 270,185 30,185" fill="#e1f5ee" stroke="#0f6e56" stroke-width="1"/>
+          <text x="150" y="148" text-anchor="middle" font-size="11" font-weight="600" fill="#04342c" font-family="Segoe UI,Arial">Unit Tests</text>
+          <text x="150" y="165" text-anchor="middle" font-size="9" fill="#0f6e56" font-family="Segoe UI,Arial">~80 use case + BLoC + model tests</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <h3>Coverage Targets</h3>
+      <table>
+        <tr><th>Layer</th><th>Target</th><th>Tool</th></tr>
+        <tr><td>Domain use cases</td><td><span class="badge badge-green">95%</span></td><td>flutter_test</td></tr>
+        <tr><td>BLoC logic</td><td><span class="badge badge-green">90%</span></td><td>bloc_test</td></tr>
+        <tr><td>Data models</td><td><span class="badge badge-green">90%</span></td><td>flutter_test</td></tr>
+        <tr><td>Repository impl</td><td><span class="badge badge-blue">80%</span></td><td>mockito</td></tr>
+        <tr><td>Cloud Functions</td><td><span class="badge badge-blue">80%</span></td><td>jest + emulators</td></tr>
+        <tr><td>Widget tests</td><td><span class="badge badge-amber">70%</span></td><td>flutter_test</td></tr>
+        <tr><td>E2E flows</td><td><span class="badge badge-amber">5 critical</span></td><td>patrol</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h3>BLoC Unit Test — SpotBloc</h3>
+  <pre><span class="cm">// test/presentation/bloc/spot_bloc_test.dart</span>
+<span class="kw">import</span> <span class="str">'package:bloc_test/bloc_test.dart'</span>;
+<span class="kw">import</span> <span class="str">'package:mockito/mockito.dart'</span>;
+
+@<span class="fn">GenerateMocks</span>([<span class="tp">GetNearbySpots</span>, <span class="tp">AdoptSpotUseCase</span>, <span class="tp">CheckInUseCase</span>])
+<span class="kw">void</span> main() {
+  <span class="kw">late</span> <span class="tp">SpotBloc</span>         bloc;
+  <span class="kw">late</span> <span class="tp">MockGetNearbySpots</span> mockGetSpots;
+
+  setUp(() {
+    mockGetSpots = <span class="tp">MockGetNearbySpots</span>();
+    bloc = <span class="tp">SpotBloc</span>(getNearbySpots: mockGetSpots, adoptSpot: <span class="tp">MockAdoptSpotUseCase</span>(), checkIn: <span class="tp">MockCheckInUseCase</span>());
+  });
+
+  tearDown(() => bloc.close());
+
+  <span class="fn">group</span>(<span class="str">'LoadNearbySpots'</span>, () {
+    <span class="kw">final</span> tSpots = [<span class="tp">Spot</span>(id: <span class="str">'s1'</span>, name: <span class="str">'Test Bench'</span>, <span class="cm">/* ... */</span>)];
+
+    <span class="fn">blocTest</span>&lt;<span class="tp">SpotBloc</span>, <span class="tp">SpotState</span>&gt;(
+      <span class="str">'emits [Loading, SpotsLoaded] on success'</span>,
+      build: () {
+        when(mockGetSpots(<span class="kw">any</span>)).thenAnswer((_) <span class="kw">async</span> => <span class="tp">Right</span>(tSpots));
+        <span class="kw">return</span> bloc;
+      },
+      act: (b) => b.add(<span class="tp">LoadNearbySpots</span>(<span class="str">28.4744</span>, <span class="str">77.5040</span>)),
+      expect: () => [isA&lt;<span class="tp">SpotLoading</span>&gt;(), isA&lt;<span class="tp">SpotsLoaded</span>&gt;()],
+      verify: (_) => verify(mockGetSpots(<span class="kw">any</span>)).called(<span class="str">1</span>),
+    );
+
+    <span class="fn">blocTest</span>&lt;<span class="tp">SpotBloc</span>, <span class="tp">SpotState</span>&gt;(
+      <span class="str">'emits [Loading, SpotError] on failure'</span>,
+      build: () {
+        when(mockGetSpots(<span class="kw">any</span>)).thenAnswer((_) <span class="kw">async</span> => <span class="tp">Left</span>(<span class="tp">ServerFailure</span>(<span class="str">'network error'</span>)));
+        <span class="kw">return</span> bloc;
+      },
+      act: (b) => b.add(<span class="tp">LoadNearbySpots</span>(<span class="str">28.4744</span>, <span class="str">77.5040</span>)),
+      expect: () => [isA&lt;<span class="tp">SpotLoading</span>&gt;(), isA&lt;<span class="tp">SpotError</span>&gt;()],
+    );
+  });
+
+  <span class="fn">group</span>(<span class="str">'CheckInSpot'</span>, () {
+    <span class="fn">blocTest</span>&lt;<span class="tp">SpotBloc</span>, <span class="tp">SpotState</span>&gt;(
+      <span class="str">'emits CheckInSuccess with points and streak'</span>,
+      build: () {
+        when(mockCheckIn(<span class="kw">any</span>)).thenAnswer((_) <span class="kw">async</span> =>
+          <span class="tp">Right</span>(<span class="tp">CheckInResponse</span>(pointsEarned: <span class="str">10</span>, streak: <span class="str">3</span>)));
+        <span class="kw">return</span> bloc;
+      },
+      act: (b) => b.add(<span class="tp">CheckInSpot</span>(<span class="str">'s1'</span>, <span class="str">28.4744</span>, <span class="str">77.5040</span>)),
+      expect: () => [
+        isA&lt;<span class="tp">SpotLoading</span>&gt;(),
+        isA&lt;<span class="tp">CheckInSuccess</span>&gt;()
+          .having((s) => s.pointsEarned, <span class="str">'points'</span>, <span class="str">10</span>)
+          .having((s) => s.currentStreak, <span class="str">'streak'</span>, <span class="str">3</span>),
+      ],
+    );
+  });
+}</pre>
+
+  <h3>Cloud Function Test — onCheckIn (Jest + Emulator)</h3>
+  <pre><span class="cm">// functions/src/__tests__/checkin.test.ts</span>
+<span class="kw">import</span> * <span class="kw">as</span> testing <span class="kw">from</span> <span class="str">'@firebase/rules-unit-testing'</span>;
+
+describe(<span class="str">'onCheckIn'</span>, () => {
+  <span class="kw">let</span> db: testing.<span class="tp">RulesTestContext</span>;
+
+  beforeAll(<span class="kw">async</span> () => {
+    <span class="kw">const</span> env = <span class="kw">await</span> testing.initializeTestEnvironment({ projectId: <span class="str">'adopt-a-spot-test'</span> });
+    db = env.authenticatedContext(<span class="str">'user1'</span>);
+  });
+
+  test(<span class="str">'awards 10 points for valid check-in'</span>, <span class="kw">async</span> () => {
+    <span class="cm">// Seed spot doc within 100m</span>
+    <span class="kw">await</span> db.firestore().collection(<span class="str">'spots'</span>).doc(<span class="str">'spot1'</span>).set({
+      geopoint: <span class="kw">new</span> <span class="tp">GeoPoint</span>(<span class="str">28.4744</span>, <span class="str">77.5040</span>), status: <span class="str">'clean'</span>
+    });
+
+    <span class="cm">// Trigger by writing checkin doc</span>
+    <span class="kw">await</span> db.firestore().collection(<span class="str">'checkins'</span>).add({
+      userId: <span class="str">'user1'</span>, spotId: <span class="str">'spot1'</span>,
+      geopoint: <span class="kw">new</span> <span class="tp">GeoPoint</span>(<span class="str">28.4744</span>, <span class="str">77.5040</span>)
+    });
+
+    <span class="cm">// Wait for function + verify wallet</span>
+    <span class="kw">await</span> <span class="kw">new</span> <span class="tp">Promise</span>(r => setTimeout(r, <span class="str">2000</span>));
+    <span class="kw">const</span> wallet = <span class="kw">await</span> db.firestore().collection(<span class="str">'wallets'</span>).doc(<span class="str">'user1'</span>).get();
+    expect(wallet.data()?.balance).toBe(<span class="str">10</span>);
+  });
+
+  test(<span class="str">'rejects check-in more than 100m away'</span>, <span class="kw">async</span> () => {
+    <span class="kw">const</span> checkinRef = <span class="kw">await</span> db.firestore().collection(<span class="str">'checkins'</span>).add({
+      userId: <span class="str">'user1'</span>, spotId: <span class="str">'spot1'</span>,
+      geopoint: <span class="kw">new</span> <span class="tp">GeoPoint</span>(<span class="str">28.5000</span>, <span class="str">77.5500</span>) <span class="cm">// far away</span>
+    });
+    <span class="kw">await</span> <span class="kw">new</span> <span class="tp">Promise</span>(r => setTimeout(r, <span class="str">2000</span>));
+    <span class="kw">const</span> doc = <span class="kw">await</span> checkinRef.get();
+    expect(doc.data()?.valid).toBe(<span class="kw">false</span>);
+  });
+});</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 17  CI/CD                                      -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section" id="s17">
+  <div class="section-header">
+    <span class="section-num">17</span>
+    <span class="section-title">CI/CD Pipeline (GitHub Actions)</span>
+  </div>
+
+  <pre><span class="cm"># .github/workflows/main.yml</span>
+name: Adopt-a-Spot CI/CD
+
+<span class="kw">on</span>:
+  push:   { branches: [main, develop] }
+  pull_request: { branches: [main] }
+
+jobs:
+  <span class="cm">### ── JOB 1: Flutter tests ───────────────────</span>
+  flutter-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: <span class="str">'3.22.x'</span>, channel: stable }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --coverage
+      - uses: codecov/codecov-action@v4
+        with: { file: coverage/lcov.info, fail_ci_if_error: true, threshold: <span class="str">'80'</span> }
+
+  <span class="cm">### ── JOB 2: Cloud Functions tests ──────────</span>
+  functions-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: <span class="str">'20'</span> }
+      - run: cd functions && npm ci
+      - run: cd functions && npm run lint
+      - uses: w9jds/setup-firebase@main
+        with: { gcp_service_account: ${{ secrets.GCP_SA_KEY }} }
+      - run: cd functions && npm test <span class="cm"># jest + firebase emulators</span>
+
+  <span class="cm">### ── JOB 3: Build APK (on main only) ───────</span>
+  build-android:
+    needs: [flutter-test, functions-test]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: <span class="str">'3.22.x'</span> }
+      - run: flutter pub get
+      - run: flutter build apk --release
+        env:
+          GOOGLE_MAPS_KEY: ${{ secrets.GOOGLE_MAPS_KEY }}
+          FIREBASE_CONFIG:  ${{ secrets.FIREBASE_CONFIG }}
+      - uses: actions/upload-artifact@v4
+        with: { name: release-apk, path: build/app/outputs/flutter-apk/app-release.apk }
+
+  <span class="cm">### ── JOB 4: Deploy Functions (on main) ─────</span>
+  deploy-functions:
+    needs: functions-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: <span class="str">'20'</span> }
+      - run: cd functions && npm ci && npm run build
+      - uses: w9jds/firebase-action@master
+        with: { args: deploy --only functions }
+        env: { GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }} }</pre>
+
+  <div class="info-box blue"><strong>Branch strategy:</strong> <code>develop</code> → runs tests only. <code>main</code> → tests + build APK + deploy Cloud Functions. Feature branches → PR against develop, requires passing tests + 1 review.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 18  DEPLOYMENT CHECKLIST                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section" id="s18">
+  <div class="section-header">
+    <span class="section-num">18</span>
+    <span class="section-title">Deployment Checklist</span>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>Firebase Setup</h3>
+      <ul class="checklist">
+        <li>Create Firebase project (Blaze plan for Cloud Functions)</li>
+        <li>Enable Authentication: Google Sign-In + Phone OTP</li>
+        <li>Create Firestore in production mode</li>
+        <li>Deploy Firestore security rules</li>
+        <li>Enable Cloud Storage + set CORS rules for photo uploads</li>
+        <li>Enable Cloud Functions (Node 20 runtime)</li>
+        <li>Set environment secrets: GEMINI_API_KEY, SENDGRID_KEY</li>
+        <li>Enable Firebase App Check (Play Integrity for Android)</li>
+        <li>Enable FCM + create municipal_alerts topic</li>
+        <li>Set up Firebase Analytics + Custom Events</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Flutter App Config</h3>
+      <ul class="checklist">
+        <li>Add google-services.json (Android) + GoogleService-Info.plist (iOS)</li>
+        <li>Set Google Maps API key in AndroidManifest.xml + Info.plist</li>
+        <li>Configure .env with GEMINI_API_KEY (for direct calls)</li>
+        <li>Set minimum SDK: Android 21 (5.0+), iOS 13+</li>
+        <li>Configure location permissions (foreground + background)</li>
+        <li>Add camera + storage permissions in manifests</li>
+        <li>Set up release keystore + sign APK</li>
+        <li class="warn">Test FCM on real device (emulator won't receive push)</li>
+        <li class="warn">Test GPS proximity with real coordinates in field</li>
+        <li class="warn">Test offline Firestore cache (airplane mode scenario)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>Firestore Indexes Required</h3>
+      <ul class="checklist">
+        <li>spots: (geohash ASC, status ASC) — nearby + filtered</li>
+        <li>reports: (spotId ASC, status ASC, createdAt DESC) — spot history</li>
+        <li>reports: (status ASC, severity DESC, createdAt DESC) — municipal queue</li>
+        <li>checkins: (userId ASC, spotId ASC, timestamp DESC) — per-user history</li>
+        <li>leaderboard: (weekPoints DESC) — weekly ranking</li>
+        <li>rewards: (category ASC, pointsCost ASC) — store browse</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Security Hardening</h3>
+      <ul class="checklist">
+        <li>Firestore rules: wallets write = false (Functions only)</li>
+        <li>Firestore rules: reports status update = municipal role only</li>
+        <li>Firebase App Check enforced on production</li>
+        <li>GPS coordinates validated server-side (never trust client distance)</li>
+        <li>Rate limit check-ins: max 2/day/spot per user (Cloud Function)</li>
+        <li>Coupon redeem: atomic transaction prevents double-spend</li>
+        <li class="warn">Never expose Gemini API key in Flutter app — route through Functions</li>
+        <li class="warn">Validate all photo URLs match Firebase Storage domain before processing</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Pilot Launch Plan (Ward 14, Greater Noida)</h3>
+  <div class="step-list">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Pre-seed 20 spots on the map</strong>
+        <span>Manually add 20 real public spots in Ward 14 (benches, bus stops, park entrances, street lights) with correct GPS coordinates and categories. Verify on-ground accuracy.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Onboard municipal officer accounts</strong>
+        <span>Create 2–3 municipal role accounts. Walk them through the web dashboard — heatmap, issue queue, field assignment. Collect feedback on report categorisation accuracy.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Beta with 50 RWA members</strong>
+        <span>Partner with a local Resident Welfare Association. Distribute app APK via WhatsApp group. Run a 2-week "Ward Cleanliness Challenge" — top 3 reporters win a local business coupon.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Measure & iterate</strong>
+        <span>After 2 weeks: measure avg check-ins/day, reports filed, municipal response time, and D7 retention. Fix pain points before Play Store / App Store submission.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <strong>Play Store submission</strong>
+        <span>Target audience: 18+, public service. Category: Social. Privacy policy required (location + camera data). App Check enforced. Expected review: 3–7 days.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box purple" style="margin-top:24px">
+    <strong>SIH / Internship positioning:</strong> For the Smart India Hackathon, frame this under Problem Statement PS-1456 (Urban Local Bodies — citizen participation in civic maintenance). The AI triage layer (Gemini Flash), offline-first Firestore cache, and gamification loop are the three differentiators judges look for. The Flutter + Firebase stack is also a direct match to the Sprinklr / Myntra mobile internship JDs Shashvat is targeting.
+  </div>
+</div>
+
+</div><!-- end .page -->
+
+<div style="background:#1e2330;color:#6e7a9a;text-align:center;padding:18px;font-size:12px;margin-top:40px;">
+  Adopt-a-Spot Implementation Document · Part 2 · Shashvat Tripathi · NIET, Greater Noida · shashvattripathi97@gmail.com · June 2026
+</div>
+</body>
+</html>

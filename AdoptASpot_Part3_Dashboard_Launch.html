@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adopt-a-Spot — Part 3: Dashboard, Anti-Gaming & Launch</title>
+<style>
+  :root {
+    --ink:#1a1a1a; --ink2:#3d3d3a; --ink3:#72716b;
+    --surface:#ffffff; --surface2:#f5f4f0; --surface3:#edecea;
+    --border:rgba(0,0,0,0.10); --border2:rgba(0,0,0,0.18);
+    --green:#2e7d52; --green-bg:#e8f5ee;
+    --teal:#0f6e56;  --teal-bg:#e1f5ee;
+    --blue:#185fa5;  --blue-bg:#e6f1fb;
+    --amber:#854f0b; --amber-bg:#faeeda;
+    --coral:#993c1d; --coral-bg:#faece7;
+    --purple:#534ab7;--purple-bg:#eeedfe;
+    --red:#a32d2d;   --red-bg:#fcebeb;
+    --radius:10px;   --radius-sm:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI','Inter',Arial,sans-serif;background:var(--surface2);color:var(--ink);font-size:15px;line-height:1.7;}
+
+  .cover{background:linear-gradient(135deg,#185fa5 0%,#2e7d52 100%);color:#fff;padding:60px 60px 48px;position:relative;overflow:hidden;}
+  .cover::before{content:'';position:absolute;width:380px;height:380px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);top:-140px;right:-60px;}
+  .cover-badge{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;margin-bottom:16px;}
+  .cover h1{font-size:34px;font-weight:700;line-height:1.2;margin-bottom:8px;}
+  .cover h1 span{opacity:.7;font-weight:400;}
+  .cover-sub{font-size:16px;opacity:.8;margin-bottom:24px;}
+  .cover-meta{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;opacity:.7;}
+  .cover-meta span::before{content:'◆ ';font-size:8px;vertical-align:2px;}
+
+  .page{max-width:960px;margin:0 auto;padding:0 24px 80px;}
+
+  .toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 28px;margin:26px 0;display:grid;grid-template-columns:1fr 1fr;gap:5px 28px;}
+  .toc-title{grid-column:1/-1;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;}
+  .toc a{color:var(--blue);text-decoration:none;font-size:13.5px;display:flex;align-items:center;gap:6px;padding:2px 0;}
+  .toc a:hover{text-decoration:underline;}
+  .toc-num{color:var(--ink3);font-size:11px;min-width:20px;}
+
+  .section{margin-top:44px;}
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--surface3);}
+  .section-num{background:var(--blue);color:#fff;font-size:12px;font-weight:700;border-radius:4px;padding:2px 8px;min-width:28px;text-align:center;}
+  .section-title{font-size:22px;font-weight:700;}
+
+  h3{font-size:16px;font-weight:600;margin:22px 0 9px;}
+  h4{font-size:14px;font-weight:600;margin:14px 0 7px;color:var(--ink2);}
+  p{margin-bottom:11px;color:var(--ink2);}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;margin-bottom:14px;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:14px 0;}
+  .card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;}
+  .card-sm .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:3px;}
+  .card-sm .value{font-size:20px;font-weight:700;}
+
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;margin-right:4px;margin-bottom:4px;}
+  .badge-green{background:var(--green-bg);color:var(--green);}
+  .badge-blue {background:var(--blue-bg); color:var(--blue); }
+  .badge-amber{background:var(--amber-bg);color:var(--amber);}
+  .badge-coral{background:var(--coral-bg);color:var(--coral);}
+  .badge-purple{background:var(--purple-bg);color:var(--purple);}
+  .badge-teal {background:var(--teal-bg); color:var(--teal); }
+  .badge-red  {background:var(--red-bg);  color:var(--red);  }
+
+  pre{background:#1e2330;color:#d4d8e8;border-radius:var(--radius-sm);padding:16px 20px;font-size:12.5px;font-family:'Fira Code','Cascadia Code',monospace;overflow-x:auto;margin:10px 0;line-height:1.65;}
+  .kw{color:#7eb8f7;} .fn{color:#82cfb5;} .str{color:#f0bc72;} .cm{color:#6e7a9a;font-style:italic;} .tp{color:#d4a8f0;} .ct{color:#f9a86b;}
+
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;}
+  th{background:var(--surface3);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding:9px 13px;text-align:left;color:var(--ink2);border-bottom:1px solid var(--border2);}
+  td{padding:8px 13px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--surface2);}
+
+  .info-box{border-left:3px solid;border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:11px 15px;margin:13px 0;font-size:13.5px;}
+  .info-box.green {border-color:var(--green); background:var(--green-bg); color:var(--green);}
+  .info-box.blue  {border-color:var(--blue);  background:var(--blue-bg);  color:var(--blue);}
+  .info-box.amber {border-color:var(--amber); background:var(--amber-bg); color:var(--amber);}
+  .info-box.purple{border-color:var(--purple);background:var(--purple-bg);color:var(--purple);}
+  .info-box.coral {border-color:var(--coral); background:var(--coral-bg); color:var(--coral);}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0;}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:14px 0;}
+
+  .checklist{list-style:none;margin:10px 0;padding:0;}
+  .checklist li{display:flex;gap:8px;padding:5px 0;font-size:13.5px;color:var(--ink2);border-bottom:1px solid var(--border);}
+  .checklist li:last-child{border-bottom:none;}
+  .checklist li::before{content:"✓";color:var(--green);font-weight:700;flex-shrink:0;}
+  .checklist li.warn::before{content:"⚠";color:var(--amber);}
+  .checklist li.x::before{content:"✕";color:var(--red);}
+
+  /* Dashboard mockup */
+  .dash-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:16px 0;}
+  .dash-topbar{background:#1e2330;padding:10px 18px;display:flex;align-items:center;gap:12px;}
+  .dash-topbar .dtitle{color:#d4d8e8;font-size:14px;font-weight:600;}
+  .dash-topbar .dtag{background:rgba(255,255,255,0.1);color:#82cfb5;font-size:10px;padding:2px 8px;border-radius:3px;}
+  .dash-body{padding:18px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+  .dash-stat{background:var(--surface2);border-radius:6px;padding:12px 14px;border-left:3px solid;}
+  .dash-stat .ds-val{font-size:24px;font-weight:700;}
+  .dash-stat .ds-lbl{font-size:11px;color:var(--ink3);margin-top:2px;}
+  .dash-stat .ds-delta{font-size:11px;margin-top:4px;}
+  .dash-map-row{padding:0 18px 18px;display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+  .dash-map{background:linear-gradient(135deg,#c8e6c9 0%,#bbdefb 50%,#ffe0b2 100%);border-radius:8px;height:200px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#555;border:1px solid var(--border);}
+  .dash-queue{background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border);}
+  .dash-queue .dq-title{font-size:12px;font-weight:600;margin-bottom:8px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;}
+  .dq-item{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+  .dq-item:last-child{border-bottom:none;}
+  .dq-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+  .dq-text{flex:1;}
+  .dq-badge{font-size:10px;padding:2px 6px;border-radius:3px;white-space:nowrap;}
+
+  /* Monetization tiers */
+  .tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:16px 0;}
+  .tier-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .tier-head{padding:16px 18px 12px;}
+  .tier-head h4{font-size:16px;font-weight:700;margin:0 0 4px;}
+  .tier-head .price{font-size:22px;font-weight:700;margin-bottom:2px;}
+  .tier-head .period{font-size:12px;color:var(--ink3);}
+  .tier-body{padding:0 18px 16px;}
+  .tier-body li{font-size:13px;color:var(--ink2);padding:4px 0;list-style:none;border-bottom:1px solid var(--border);}
+  .tier-body li:last-child{border-bottom:none;}
+  .tier-body li::before{content:"✓ ";color:var(--green);font-weight:700;}
+
+  /* pubspec */
+  .yaml-section{margin:10px 0;}
+  .yaml-section h4{font-size:13px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+
+  /* Timeline bar */
+  .roadmap-bar{margin:16px 0;}
+  .rb-row{display:grid;grid-template-columns:80px 1fr;gap:12px;align-items:center;margin-bottom:10px;}
+  .rb-label{font-size:12px;font-weight:600;color:var(--ink3);text-align:right;}
+  .rb-track{background:var(--surface3);border-radius:4px;height:28px;position:relative;overflow:hidden;}
+  .rb-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:10px;font-size:11px;font-weight:600;color:#fff;}
+
+  @media(max-width:600px){.two-col,.three-col{grid-template-columns:1fr;} .dash-body{grid-template-columns:1fr 1fr;} .dash-map-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-badge">Implementation Document · Part 3 · Final</div>
+  <h1>Adopt-a-Spot <span>/ Dashboard, Anti-Gaming & Launch</span></h1>
+  <p class="cover-sub">Municipal Web Dashboard · Anti-Gaming Rules · Monetization · Full pubspec.yaml · Bootstrap Guide</p>
+  <div class="cover-meta">
+    <span>Flutter · Firebase · TypeScript</span>
+    <span>Final Part — Completes the Series</span>
+    <span>Shashvat Tripathi · NIET</span>
+  </div>
+</div>
+
+<div class="page">
+
+<div class="toc">
+  <div class="toc-title">Part 3 Contents</div>
+  <a href="#s19"><span class="toc-num">19</span> Municipal Web Dashboard — Full Spec</a>
+  <a href="#s23"><span class="toc-num">23</span> Complete pubspec.yaml</a>
+  <a href="#s20"><span class="toc-num">20</span> Anti-Gaming & Fraud Prevention</a>
+  <a href="#s24"><span class="toc-num">24</span> Project Bootstrap Guide</a>
+  <a href="#s21"><span class="toc-num">21</span> Monetization Strategy</a>
+  <a href="#s25"><span class="toc-num">25</span> Scaling Beyond Pilot</a>
+  <a href="#s22"><span class="toc-num">22</span> Privacy & Legal Compliance</a>
+  <a href="#s26"><span class="toc-num">26</span> Master Summary</a>
+</div>
+
+<!-- ═══════════════ 19 MUNICIPAL DASHBOARD ═══════════════ -->
+<div class="section" id="s19">
+  <div class="section-header">
+    <span class="section-num">19</span>
+    <span class="section-title">Municipal Web Dashboard — Full Spec</span>
+  </div>
+
+  <p>The Municipal Dashboard is a <strong>Flutter Web</strong> app targeting desktop browsers (1280px+). It uses the same Firebase backend as the citizen app — same Firestore collections, same real-time listeners — but with a different role-gated UI. Municipal officers log in via Google SSO and their accounts have <code>role: "municipal"</code> in Firestore, which unlocks write permissions for report status updates and spot management.</p>
+
+  <!-- Dashboard mockup -->
+  <div class="dash-wrap">
+    <div class="dash-topbar">
+      <div class="dtitle">Adopt-a-Spot · Municipal Command Centre</div>
+      <div class="dtag">Ward 14 · Greater Noida</div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#82cfb5;"></div>
+        <span style="color:#82cfb5;font-size:11px;">Live · 3 officers online</span>
+      </div>
+    </div>
+    <div class="dash-body">
+      <div class="dash-stat" style="border-left-color:var(--coral);">
+        <div class="ds-val" style="color:var(--coral)">14</div>
+        <div class="ds-lbl">Open Reports</div>
+        <div class="ds-delta" style="color:var(--coral)">▲ 3 new today</div>
+      </div>
+      <div class="dash-stat" style="border-left-color:var(--amber);">
+        <div class="ds-val" style="color:var(--amber)">5</div>
+        <div class="ds-lbl">In Progress</div>
+        <div class="ds-delta" style="color:var(--amber)">2 assigned today</div>
+      </div>
+      <div class="dash-stat" style="border-left-color:var(--green);">
+        <div class="ds-val" style="color:var(--green)">42</div>
+        <div class="ds-lbl">Resolved (Month)</div>
+        <div class="ds-delta" style="color:var(--green)">▲ 18% vs last month</div>
+      </div>
+      <div class="dash-stat" style="border-left-color:var(--blue);">
+        <div class="ds-val" style="color:var(--blue)">31h</div>
+        <div class="ds-lbl">Avg Resolution Time</div>
+        <div class="ds-delta" style="color:var(--blue)">▼ Down from 72h</div>
+      </div>
+    </div>
+    <div class="dash-map-row">
+      <div class="dash-map">🗺 Real-time Heatmap — Issue Density by Ward Block<br><span style="font-size:11px;color:#777;margin-top:6px;display:block">Red = ≥3 open reports · Orange = 1–2 · Green = clean</span></div>
+      <div class="dash-queue">
+        <div class="dq-title">Priority Queue</div>
+        <div class="dq-item">
+          <div class="dq-dot" style="background:var(--red)"></div>
+          <div class="dq-text"><strong style="font-size:12px">Fallen tree blocking path</strong><br>Sector 12 Park · 4h ago</div>
+          <div class="dq-badge" style="background:var(--red-bg);color:var(--red)">HIGH</div>
+        </div>
+        <div class="dq-item">
+          <div class="dq-dot" style="background:var(--coral)"></div>
+          <div class="dq-text"><strong style="font-size:12px">Broken streetlight</strong><br>Alpha 1 Road · 7h ago</div>
+          <div class="dq-badge" style="background:var(--coral-bg);color:var(--coral)">MED</div>
+        </div>
+        <div class="dq-item">
+          <div class="dq-dot" style="background:var(--amber)"></div>
+          <div class="dq-text"><strong style="font-size:12px">Garbage overflowing</strong><br>Bus Stop 4 · 11h ago</div>
+          <div class="dq-badge" style="background:var(--amber-bg);color:var(--amber)">MED</div>
+        </div>
+        <div class="dq-item">
+          <div class="dq-dot" style="background:var(--green)"></div>
+          <div class="dq-text"><strong style="font-size:12px">Bench slat broken</strong><br>Gamma Park · 1d ago</div>
+          <div class="dq-badge" style="background:var(--green-bg);color:var(--green)">LOW</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Dashboard Pages & Features</h3>
+  <table>
+    <tr><th>Page</th><th>Key Components</th><th>Firestore Query</th></tr>
+    <tr>
+      <td><strong>Overview</strong></td>
+      <td>4 KPI cards, real-time heatmap, priority queue, recent activity feed</td>
+      <td><code>reports where status='open' orderBy severity desc</code></td>
+    </tr>
+    <tr>
+      <td><strong>Report Queue</strong></td>
+      <td>Filterable table (severity, category, ward, date), one-click assign to worker, bulk status update, photo viewer</td>
+      <td><code>reports where status in ['open','inProgress']</code></td>
+    </tr>
+    <tr>
+      <td><strong>Field Workers</strong></td>
+      <td>Worker list, active task count per worker, completion rate badges, assign/unassign UI</td>
+      <td><code>users where role='field_worker'</code></td>
+    </tr>
+    <tr>
+      <td><strong>Spot Manager</strong></td>
+      <td>Add/edit/deactivate spots, see adoption history, override spot status, export spot CSV</td>
+      <td><code>spots (full admin access)</code></td>
+    </tr>
+    <tr>
+      <td><strong>Analytics</strong></td>
+      <td>Weekly report trends (bar chart), category breakdown (pie), top reporting citizens (table), avg resolution time (line)</td>
+      <td>Firestore aggregations + Firebase Analytics</td>
+    </tr>
+    <tr>
+      <td><strong>Citizens</strong></td>
+      <td>Leaderboard view, flag suspicious accounts, send broadcast notification to ward</td>
+      <td><code>leaderboard orderBy allTimePoints desc</code></td>
+    </tr>
+  </table>
+
+  <h3>Flutter Web — Report Detail Panel Code</h3>
+  <pre><span class="cm">// dashboard/lib/widgets/report_detail_panel.dart</span>
+<span class="kw">class</span> <span class="tp">ReportDetailPanel</span> <span class="kw">extends</span> <span class="tp">StatelessWidget</span> {
+  <span class="kw">final</span> <span class="tp">Report</span> report;
+  <span class="kw">const</span> <span class="tp">ReportDetailPanel</span>({<span class="kw">required this</span>.report, <span class="kw">super</span>.key});
+
+  @<span class="kw">override</span>
+  <span class="tp">Widget</span> build(<span class="tp">BuildContext</span> context) {
+    <span class="kw">return</span> <span class="tp">Container</span>(
+      width: <span class="str">360</span>, decoration: <span class="tp">BoxDecoration</span>(
+        color: <span class="tp">Colors</span>.white,
+        border: <span class="tp">Border</span>(left: <span class="tp">BorderSide</span>(color: <span class="tp">Colors</span>.grey.shade200)),
+      ),
+      child: <span class="tp">Column</span>(crossAxisAlignment: <span class="tp">CrossAxisAlignment</span>.start, children: [
+        <span class="tp">_Header</span>(report: report),
+        <span class="tp">_PhotoCarousel</span>(urls: report.photoUrls),
+        <span class="tp">_InfoRow</span>(<span class="str">'AI Label'</span>,   report.aiLabel),
+        <span class="tp">_InfoRow</span>(<span class="str">'Severity'</span>,   report.severity, chip: <span class="kw">true</span>),
+        <span class="tp">_InfoRow</span>(<span class="str">'Reported'</span>,   report.createdAt.timeAgo()),
+        <span class="tp">_InfoRow</span>(<span class="str">'Reporter ID'</span>, report.reporterId),
+        <span class="kw">const</span> <span class="tp">Divider</span>(),
+        <span class="tp">_StatusDropdown</span>(
+          current: report.status,
+          onChanged: (newStatus) => context.read&lt;<span class="tp">ReportDashboardBloc</span>&gt;()
+            .add(<span class="tp">UpdateReportStatus</span>(report.id, newStatus)),
+        ),
+        <span class="tp">_WorkerAssign</span>(reportId: report.id, current: report.assignedTo),
+        <span class="tp">_AddNoteField</span>(reportId: report.id),
+      ]),
+    );
+  }
+}
+
+<span class="cm">// Real-time stream of all open reports</span>
+<span class="tp">Stream</span>&lt;<span class="tp">List</span>&lt;<span class="tp">Report</span>&gt;&gt; watchOpenReports() =>
+  <span class="tp">FirebaseFirestore</span>.instance
+    .collection(<span class="str">'reports'</span>)
+    .where(<span class="str">'status'</span>, whereIn: [<span class="str">'open'</span>, <span class="str">'inProgress'</span>])
+    .orderBy(<span class="str">'severity'</span>, descending: <span class="kw">true</span>)
+    .orderBy(<span class="str">'createdAt'</span>, descending: <span class="kw">true</span>)
+    .snapshots()
+    .map((s) => s.docs.map(<span class="tp">ReportModel</span>.fromDoc).toList());</pre>
+
+  <div class="info-box blue"><strong>Performance note:</strong> For wards with 500+ spots, paginate the report queue using Firestore cursor-based pagination (<code>startAfterDocument</code>) with page size 20. The heatmap renders as a <code>TileOverlay</code> on Google Maps — never raw markers — to stay under the 1000-marker render limit.</div>
+</div>
+
+<!-- ═══════════════ 20 ANTI-GAMING ═══════════════ -->
+<div class="section" id="s20">
+  <div class="section-header">
+    <span class="section-num">20</span>
+    <span class="section-title">Anti-Gaming & Fraud Prevention</span>
+  </div>
+
+  <p>A points-based system is inherently gameable. The following rules are enforced <strong>server-side only</strong> (Cloud Functions + Firestore rules) — the Flutter app never makes trust decisions about point validity.</p>
+
+  <h3>Attack Vectors & Defences</h3>
+  <table>
+    <tr><th>Attack</th><th>How It Works</th><th>Defence</th></tr>
+    <tr>
+      <td><strong>GPS Spoofing</strong></td>
+      <td>User fakes GPS coordinates to claim check-in without being present</td>
+      <td>
+        1. Server-side distance check (geofire-common)<br>
+        2. Cross-check device accelerometer delta (no movement = suspicious)<br>
+        3. Flag accounts with &gt;5 check-ins per day across &gt;3 different spots
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Check-in farming</strong></td>
+      <td>User checks in to own spot multiple times per day</td>
+      <td>
+        Max 2 valid check-ins/spot/user/day enforced in Cloud Function.<br>
+        Minimum 3-hour gap between check-ins on same spot (stored in wallet.lastCheckins map)
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Fake reports</strong></td>
+      <td>User submits fabricated photos (stock images, old photos) to farm +25pts</td>
+      <td>
+        Gemini Flash checks image metadata (no EXIF = flag).<br>
+        Perceptual hash (pHash) stored per photo — duplicate detection within 72h.<br>
+        Municipal officer can mark report as "invalid" → points reversed atomically
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Multi-accounting</strong></td>
+      <td>User creates 5 accounts to multiply rewards</td>
+      <td>
+        Phone OTP verification required — each phone number maps to exactly 1 UID.<br>
+        Device fingerprint (Firebase App Check device attestation) stored on first login
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Coupon double-spend</strong></td>
+      <td>User exploits race condition to redeem same coupon twice simultaneously</td>
+      <td>
+        All redemptions in a single Firestore transaction (atomic read-check-write).<br>
+        Coupon code generated post-transaction only — never pre-generated
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Spot squatting</strong></td>
+      <td>User adopts 10 spots and never checks in, blocking others</td>
+      <td>
+        One spot per user at a time (hard limit in adoptSpot function).<br>
+        Auto-release: if no check-in for 7 days, spot freed by scheduled Cloud Function (pubsub.schedule)
+      </td>
+    </tr>
+  </table>
+
+  <h3>Suspicious Activity Cloud Function</h3>
+  <pre><span class="cm">// functions/src/antifraud.ts</span>
+<span class="kw">export const</span> detectSuspiciousActivity = functions.pubsub
+  .schedule(<span class="str">'every 6 hours'</span>)
+  .onRun(<span class="kw">async</span> () => {
+    <span class="kw">const</span> now = admin.firestore.<span class="tp">Timestamp</span>.now();
+    <span class="kw">const</span> sixHoursAgo = <span class="kw">new</span> <span class="tp">Date</span>(now.toMillis() - <span class="str">6</span> * <span class="str">60</span> * <span class="str">60</span> * <span class="str">1000</span>);
+
+    <span class="cm">// Flag users with >10 check-ins in 6 hours</span>
+    <span class="kw">const</span> recentCheckins = <span class="kw">await</span> db.collection(<span class="str">'checkins'</span>)
+      .where(<span class="str">'timestamp'</span>, <span class="str">'>'</span>, sixHoursAgo)
+      .where(<span class="str">'valid'</span>, <span class="str">'=='</span>, <span class="kw">true</span>)
+      .get();
+
+    <span class="cm">// Group by userId</span>
+    <span class="kw">const</span> byUser = <span class="kw">new</span> <span class="tp">Map</span>&lt;<span class="tp">string</span>, <span class="tp">number</span>&gt;();
+    recentCheckins.forEach(doc => {
+      <span class="kw">const</span> uid = doc.data().userId;
+      byUser.set(uid, (byUser.get(uid) ?? <span class="str">0</span>) + <span class="str">1</span>);
+    });
+
+    <span class="kw">const</span> flagged: <span class="tp">string</span>[] = [];
+    byUser.forEach(<span class="kw">async</span> (count, uid) => {
+      <span class="kw">if</span> (count > <span class="str">10</span>) {
+        flagged.push(uid);
+        <span class="kw">await</span> db.collection(<span class="str">'users'</span>).doc(uid).update({
+          flagged: <span class="kw">true</span>,
+          flagReason: <span class="str">`Suspicious: ${count} check-ins in 6h`</span>,
+          flaggedAt: admin.firestore.<span class="tp">Timestamp</span>.now(),
+        });
+      }
+    });
+
+    <span class="cm">// Auto-release abandoned spots (no check-in for 7+ days)</span>
+    <span class="kw">const</span> sevenDaysAgo = <span class="kw">new</span> <span class="tp">Date</span>(now.toMillis() - <span class="str">7</span> * <span class="str">24</span> * <span class="str">60</span> * <span class="str">60</span> * <span class="str">1000</span>);
+    <span class="kw">const</span> staleSpots = <span class="kw">await</span> db.collection(<span class="str">'spots'</span>)
+      .where(<span class="str">'adopterId'</span>, <span class="str">'!='</span>, <span class="str">''</span>)
+      .where(<span class="str">'lastCheckin'</span>, <span class="str">'<'</span>, sevenDaysAgo)
+      .get();
+
+    <span class="kw">const</span> batch = db.batch();
+    staleSpots.forEach(doc => batch.update(doc.ref, { adopterId: <span class="str">''</span>, status: <span class="str">'clean'</span> }));
+    <span class="kw">await</span> batch.commit();
+
+    console.log(<span class="str">`Flagged ${flagged.length} users, released ${staleSpots.size} stale spots`</span>);
+  });</pre>
+
+  <h3>Duplicate Photo Detection (pHash)</h3>
+  <pre><span class="cm">// functions/src/photoHash.ts — called inside onIssueReport</span>
+<span class="kw">import</span> Jimp <span class="kw">from</span> <span class="str">'jimp'</span>;
+
+<span class="kw">async function</span> <span class="fn">computePHash</span>(imageBuffer: <span class="tp">Buffer</span>): <span class="tp">Promise</span>&lt;<span class="tp">string</span>&gt; {
+  <span class="kw">const</span> img = <span class="kw">await</span> Jimp.read(imageBuffer);
+  img.resize(<span class="str">32</span>, <span class="str">32</span>).greyscale();
+  <span class="kw">const</span> pixels = img.bitmap.data;
+  <span class="kw">const</span> avg = pixels.reduce((a: <span class="tp">number</span>, b: <span class="tp">number</span>) => a + b, <span class="str">0</span>) / pixels.length;
+  <span class="kw">return</span> pixels.map((p: <span class="tp">number</span>) => p >= avg ? <span class="str">'1'</span> : <span class="str">'0'</span>).join(<span class="str">''</span>);
+}
+
+<span class="kw">function</span> <span class="fn">hammingDistance</span>(a: <span class="tp">string</span>, b: <span class="tp">string</span>): <span class="tp">number</span> {
+  <span class="kw">return</span> [...a].filter((c, i) => c !== b[i]).length;
+}
+
+<span class="cm">// Usage: if hammingDistance(newHash, existingHash) < 10 → duplicate flag</span></pre>
+</div>
+
+<!-- ═══════════════ 21 MONETIZATION ═══════════════ -->
+<div class="section" id="s21">
+  <div class="section-header">
+    <span class="section-num">21</span>
+    <span class="section-title">Monetization Strategy</span>
+  </div>
+
+  <p>Adopt-a-Spot has <strong>three revenue streams</strong>: municipal SaaS subscriptions, local business advertising (the rewards marketplace), and government grant funding. The citizen app remains permanently free — monetizing citizen engagement would destroy the core value proposition.</p>
+
+  <div class="tier-grid">
+    <!-- Municipal Tier -->
+    <div class="tier-card">
+      <div class="tier-head" style="background:var(--blue-bg);">
+        <h4 style="color:var(--blue)">🏛 Municipal SaaS</h4>
+        <div class="price" style="color:var(--blue)">₹4,999</div>
+        <div class="period">per ward / month</div>
+      </div>
+      <ul class="tier-body">
+        <li>Unlimited real-time heatmap</li>
+        <li>Issue queue + field assignment</li>
+        <li>Monthly analytics PDF report</li>
+        <li>Spot management (up to 100 spots)</li>
+        <li>Email support</li>
+        <li>Up to 3 municipal officer accounts</li>
+      </ul>
+    </div>
+
+    <!-- Municipal Pro -->
+    <div class="tier-card" style="border-color:var(--teal);">
+      <div class="tier-head" style="background:var(--teal-bg);">
+        <h4 style="color:var(--teal)">🏙 Municipal Pro</h4>
+        <div class="price" style="color:var(--teal)">₹12,999</div>
+        <div class="period">per city / month</div>
+      </div>
+      <ul class="tier-body">
+        <li>All of Municipal SaaS</li>
+        <li>Unlimited spots across all wards</li>
+        <li>Custom branding (city logo)</li>
+        <li>API access for ERP integration</li>
+        <li>AI triage priority routing</li>
+        <li>Dedicated account manager</li>
+        <li>WhatsApp broadcast to citizens</li>
+      </ul>
+    </div>
+
+    <!-- Business Partner -->
+    <div class="tier-card">
+      <div class="tier-head" style="background:var(--amber-bg);">
+        <h4 style="color:var(--amber)">🛍 Business Partner</h4>
+        <div class="price" style="color:var(--amber)">₹999</div>
+        <div class="period">per month + 5% on redemptions</div>
+      </div>
+      <ul class="tier-body">
+        <li>List up to 5 reward offers</li>
+        <li>Coupon QR management</li>
+        <li>Redemption analytics dashboard</li>
+        <li>Geo-targeted to nearby adopters</li>
+        <li>Featured placement (extra ₹499)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Revenue Projection (Year 1 — Pilot City)</h3>
+  <div class="roadmap-bar">
+    <div class="rb-row">
+      <div class="rb-label">Month 1–2</div>
+      <div class="rb-track"><div class="rb-fill" style="width:15%;background:var(--coral)">₹0 (free pilot)</div></div>
+    </div>
+    <div class="rb-row">
+      <div class="rb-label">Month 3–4</div>
+      <div class="rb-track"><div class="rb-fill" style="width:30%;background:var(--amber)">₹25K (5 wards)</div></div>
+    </div>
+    <div class="rb-row">
+      <div class="rb-label">Month 5–6</div>
+      <div class="rb-track"><div class="rb-fill" style="width:50%;background:var(--blue)">₹75K (business partners onboard)</div></div>
+    </div>
+    <div class="rb-row">
+      <div class="rb-label">Month 7–12</div>
+      <div class="rb-track"><div class="rb-fill" style="width:90%;background:var(--green)">₹2.5L+/month (city-wide + 50 businesses)</div></div>
+    </div>
+  </div>
+
+  <div class="info-box amber"><strong>Grant angle:</strong> The Ministry of Housing & Urban Affairs (MoHUA) Smart Cities Mission awards up to ₹50L to citizen engagement tech under the "ICT for Citizen Services" vertical. Frame Adopt-a-Spot as a force-multiplier for ULB capacity — it's exactly the framing they fund.</div>
+</div>
+
+<!-- ═══════════════ 22 PRIVACY ═══════════════ -->
+<div class="section" id="s22">
+  <div class="section-header">
+    <span class="section-num">22</span>
+    <span class="section-title">Privacy & Legal Compliance</span>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>Data Collected</h3>
+      <table>
+        <tr><th>Data Type</th><th>Why Collected</th><th>Retention</th></tr>
+        <tr><td>Phone number</td><td>Auth + anti-fraud</td><td>Account lifetime</td></tr>
+        <tr><td>Location (GPS)</td><td>Check-in proximity only</td><td>Per check-in doc</td></tr>
+        <tr><td>Photos</td><td>Issue evidence</td><td>90 days post-resolve</td></tr>
+        <tr><td>Device ID</td><td>App Check / anti-fraud</td><td>Account lifetime</td></tr>
+        <tr><td>Points history</td><td>Wallet + leaderboard</td><td>Account lifetime</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Compliance Checklist</h3>
+      <ul class="checklist">
+        <li>Privacy Policy linked in app (required by Play Store)</li>
+        <li>Location permission rationale shown before request</li>
+        <li>Camera permission rationale shown before request</li>
+        <li>No location tracking in background (foreground only)</li>
+        <li>Photos stored in Firebase Storage with private ACL — URL expires in 24h</li>
+        <li>Account deletion flow implemented (DPDP Act 2023 compliance)</li>
+        <li class="warn">DPDP Act 2023 (India): data fiduciary registration if MAU &gt; 500K</li>
+        <li class="warn">Leaderboard: display name only, never full name or phone number</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 23 PUBSPEC ═══════════════ -->
+<div class="section" id="s23">
+  <div class="section-header">
+    <span class="section-num">23</span>
+    <span class="section-title">Complete pubspec.yaml</span>
+  </div>
+
+  <pre><span class="cm"># pubspec.yaml — Adopt-a-Spot</span>
+name: adopt_a_spot
+description: Gamified civic maintenance platform for citizens and municipalities.
+version: 1.0.0+1
+publish_to: <span class="str">'none'</span>
+
+environment:
+  sdk: <span class="str">'>=3.3.0 <4.0.0'</span>
+  flutter: <span class="str">'>=3.22.0'</span>
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  <span class="cm"># ── Firebase core ──────────────────────────────</span>
+  firebase_core:           ^3.3.0
+  firebase_auth:           ^5.1.2
+  cloud_firestore:         ^5.2.0
+  firebase_storage:        ^12.1.2
+  cloud_functions:         ^4.7.2
+  firebase_messaging:      ^15.1.0
+  firebase_analytics:      ^11.2.0
+  firebase_app_check:      ^0.3.0
+
+  <span class="cm"># ── State management ───────────────────────────</span>
+  flutter_bloc:            ^8.1.6
+  equatable:               ^2.0.5
+  dartz:                   ^0.10.1   <span class="cm"># Either type for use cases</span>
+
+  <span class="cm"># ── Maps & location ────────────────────────────</span>
+  google_maps_flutter:     ^2.7.0
+  geolocator:              ^13.0.1
+  permission_handler:      ^11.3.1
+  geoflutter_store:        ^0.0.4    <span class="cm"># Geohash bounding box queries</span>
+
+  <span class="cm"># ── Camera & media ─────────────────────────────</span>
+  image_picker:            ^1.1.2
+  cached_network_image:    ^3.3.1
+  flutter_image_compress:  ^2.3.0    <span class="cm"># Compress before upload</span>
+  photo_view:              ^0.15.0   <span class="cm"># Full-screen photo viewer</span>
+
+  <span class="cm"># ── DI & routing ───────────────────────────────</span>
+  get_it:                  ^8.0.2
+  go_router:               ^14.2.7
+
+  <span class="cm"># ── UI & animation ─────────────────────────────</span>
+  lottie:                  ^3.1.2    <span class="cm"># Confetti on points earn</span>
+  flutter_animate:         ^4.5.0
+  shimmer:                 ^3.0.0    <span class="cm"># Loading skeletons</span>
+  badges:                  ^3.1.2    <span class="cm"># Points badge widget</span>
+  fl_chart:                ^0.68.0   <span class="cm"># Analytics charts</span>
+  qr_flutter:              ^4.1.0    <span class="cm"># Coupon QR codes</span>
+  mobile_scanner:          ^5.2.3    <span class="cm"># Business QR scanner</span>
+
+  <span class="cm"># ── Utils ──────────────────────────────────────</span>
+  flutter_dotenv:          ^5.2.1
+  intl:                    ^0.19.0
+  timeago:                 ^3.7.0    <span class="cm"># "2 hours ago" formatting</span>
+  uuid:                    ^4.4.2
+  crypto:                  ^3.0.3    <span class="cm"># pHash & coupon code gen</span>
+  logger:                  ^2.4.0
+  connectivity_plus:       ^6.0.5    <span class="cm"># Offline detection</span>
+  hive_flutter:            ^1.1.0    <span class="cm"># Local cache for offline</span>
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints:      ^4.0.0
+  bloc_test:          ^9.1.7
+  mockito:            ^5.4.4
+  build_runner:       ^2.4.12
+  patrol:             ^3.11.0       <span class="cm"># E2E testing</span>
+  firebase_app_check_testing: ^0.3.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/lottie/
+    - assets/icons/
+    - .env
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-SemiBold.ttf  weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf      weight: 700</pre>
+</div>
+
+<!-- ═══════════════ 24 BOOTSTRAP GUIDE ═══════════════ -->
+<div class="section" id="s24">
+  <div class="section-header">
+    <span class="section-num">24</span>
+    <span class="section-title">Project Bootstrap Guide</span>
+  </div>
+  <p>Run these commands in order on a fresh machine with Flutter 3.22+ and Node 20+ installed.</p>
+
+  <h3>Step 1 — Create Flutter project & set up Firebase</h3>
+  <pre><span class="cm"># 1. Create project</span>
+flutter create adopt_a_spot --org com.shashvat --platforms android,ios,web
+<span class="kw">cd</span> adopt_a_spot
+
+<span class="cm"># 2. Install FlutterFire CLI</span>
+dart pub global activate flutterfire_cli
+
+<span class="cm"># 3. Log in to Firebase & configure (creates google-services.json + GoogleService-Info.plist)</span>
+firebase login
+flutterfire configure --project=adopt-a-spot-prod
+
+<span class="cm"># 4. Install dependencies</span>
+flutter pub get
+
+<span class="cm"># 5. Create .env file</span>
+cat &gt; .env &lt;&lt; EOF
+GOOGLE_MAPS_KEY=your_maps_api_key_here
+GEMINI_API_KEY=your_gemini_key_here
+ENVIRONMENT=development
+EOF</pre>
+
+  <h3>Step 2 — Cloud Functions setup</h3>
+  <pre><span class="cm"># From project root</span>
+firebase init functions   <span class="cm"># Choose TypeScript, ESLint: yes</span>
+<span class="kw">cd</span> functions
+
+<span class="cm"># Install function dependencies</span>
+npm install geofire-common @google/generative-ai jimp
+npm install -D @types/node jest ts-jest @firebase/rules-unit-testing
+
+<span class="cm"># Set Gemini API key as Firebase secret</span>
+firebase functions:secrets:set GEMINI_API_KEY
+
+<span class="cm"># Start local emulators (Auth + Firestore + Functions + Storage)</span>
+firebase emulators:start --only auth,firestore,functions,storage</pre>
+
+  <h3>Step 3 — Firestore indexes (firestore.indexes.json)</h3>
+  <pre>{
+  <span class="str">"indexes"</span>: [
+    {
+      <span class="str">"collectionGroup"</span>: <span class="str">"spots"</span>,
+      <span class="str">"queryScope"</span>: <span class="str">"COLLECTION"</span>,
+      <span class="str">"fields"</span>: [
+        { <span class="str">"fieldPath"</span>: <span class="str">"geohash"</span>, <span class="str">"order"</span>: <span class="str">"ASCENDING"</span> },
+        { <span class="str">"fieldPath"</span>: <span class="str">"status"</span>,  <span class="str">"order"</span>: <span class="str">"ASCENDING"</span> }
+      ]
+    },
+    {
+      <span class="str">"collectionGroup"</span>: <span class="str">"reports"</span>,
+      <span class="str">"queryScope"</span>: <span class="str">"COLLECTION"</span>,
+      <span class="str">"fields"</span>: [
+        { <span class="str">"fieldPath"</span>: <span class="str">"status"</span>,    <span class="str">"order"</span>: <span class="str">"ASCENDING"</span>  },
+        { <span class="str">"fieldPath"</span>: <span class="str">"severity"</span>,  <span class="str">"order"</span>: <span class="str">"DESCENDING"</span> },
+        { <span class="str">"fieldPath"</span>: <span class="str">"createdAt"</span>, <span class="str">"order"</span>: <span class="str">"DESCENDING"</span> }
+      ]
+    },
+    {
+      <span class="str">"collectionGroup"</span>: <span class="str">"leaderboard"</span>,
+      <span class="str">"queryScope"</span>: <span class="str">"COLLECTION"</span>,
+      <span class="str">"fields"</span>: [
+        { <span class="str">"fieldPath"</span>: <span class="str">"weekPoints"</span>, <span class="str">"order"</span>: <span class="str">"DESCENDING"</span> }
+      ]
+    }
+  ]
+}</pre>
+
+  <h3>Step 4 — AndroidManifest.xml permissions</h3>
+  <pre><span class="cm">&lt;!-- android/app/src/main/AndroidManifest.xml --&gt;</span>
+&lt;<span class="kw">uses-permission</span> android:name=<span class="str">"android.permission.INTERNET"</span>/&gt;
+&lt;<span class="kw">uses-permission</span> android:name=<span class="str">"android.permission.ACCESS_FINE_LOCATION"</span>/&gt;
+&lt;<span class="kw">uses-permission</span> android:name=<span class="str">"android.permission.ACCESS_COARSE_LOCATION"</span>/&gt;
+&lt;<span class="kw">uses-permission</span> android:name=<span class="str">"android.permission.CAMERA"</span>/&gt;
+&lt;<span class="kw">uses-permission</span> android:name=<span class="str">"android.permission.READ_MEDIA_IMAGES"</span>/&gt;
+&lt;<span class="kw">uses-permission</span> android:name=<span class="str">"android.permission.RECEIVE_BOOT_COMPLETED"</span>/&gt; <span class="cm">&lt;!-- FCM --&gt;</span>
+&lt;<span class="kw">uses-permission</span> android:name=<span class="str">"android.permission.POST_NOTIFICATIONS"</span>/&gt;
+
+<span class="cm">&lt;!-- Inside &lt;application&gt; tag: --&gt;</span>
+&lt;<span class="kw">meta-data</span>
+  android:name=<span class="str">"com.google.android.geo.API_KEY"</span>
+  android:value=<span class="str">"${GOOGLE_MAPS_KEY}"</span>/&gt;</pre>
+
+  <h3>Step 5 — Run & build</h3>
+  <pre><span class="cm"># Run on connected device (Android)</span>
+flutter run --dart-define-from-file=.env
+
+<span class="cm"># Run all unit tests</span>
+flutter test
+
+<span class="cm"># Build release APK</span>
+flutter build apk --release --dart-define-from-file=.env
+
+<span class="cm"># Build release App Bundle (Play Store)</span>
+flutter build appbundle --release --dart-define-from-file=.env
+
+<span class="cm"># Deploy Cloud Functions</span>
+<span class="kw">cd</span> functions && npm run build && firebase deploy --only functions
+
+<span class="cm"># Deploy Firestore rules + indexes</span>
+firebase deploy --only firestore</pre>
+</div>
+
+<!-- ═══════════════ 25 SCALING ═══════════════ -->
+<div class="section" id="s25">
+  <div class="section-header">
+    <span class="section-num">25</span>
+    <span class="section-title">Scaling Beyond the Pilot</span>
+  </div>
+
+  <div class="three-col">
+    <div class="card-sm">
+      <div class="label">Phase 2 · City-Wide</div>
+      <p style="font-size:13px;margin-top:6px">Expand to all wards. Add multilingual support (Hindi, Tamil, Telugu) using Flutter's <code>intl</code> + ARB files. Add ward-selector on map. Municipal Pro plan.</p>
+    </div>
+    <div class="card-sm">
+      <div class="label">Phase 3 · Multi-City</div>
+      <p style="font-size:13px;margin-top:6px">Multi-tenant Firestore: each city gets its own collection namespace. City admin accounts manage their own spots and officers. Central SaaS billing via Razorpay subscriptions.</p>
+    </div>
+    <div class="card-sm">
+      <div class="label">Phase 4 · API Platform</div>
+      <p style="font-size:13px;margin-top:6px">Expose a REST API so municipal ERP systems (e.g. eNagarSewa) can pull live issue data. Webhooks for status changes. Opens a B2G (business-to-government) revenue channel.</p>
+    </div>
+  </div>
+
+  <h3>Firestore Scaling Limits (Firebase Blaze)</h3>
+  <table>
+    <tr><th>Resource</th><th>Free Tier</th><th>Blaze (Pay as you go)</th><th>Adopt-a-Spot Estimate</th></tr>
+    <tr><td>Firestore reads/day</td><td>50K</td><td>$0.06 / 100K</td><td>~200K reads/day at 1K MAU → ~$3/day</td></tr>
+    <tr><td>Cloud Function invocations</td><td>125K/month</td><td>$0.40 / million</td><td>~50K/month at pilot → free tier</td></tr>
+    <tr><td>Cloud Storage</td><td>5 GB</td><td>$0.026/GB/month</td><td>~10 GB photos/month → ~$0.26</td></tr>
+    <tr><td>FCM messages</td><td>Unlimited</td><td>Free</td><td>Free</td></tr>
+    <tr><td>Auth (phone)</td><td>10K/month</td><td>$0.0055 per verification</td><td>~500 new signups/month → $2.75</td></tr>
+  </table>
+  <div class="info-box green"><strong>Cost estimate for pilot (1 ward, ~500 MAU):</strong> ~₹500–₹800/month in Firebase costs. Municipal SaaS revenue at ₹4,999/ward gives a healthy 6x margin from day one.</div>
+</div>
+
+<!-- ═══════════════ 26 MASTER SUMMARY ═══════════════ -->
+<div class="section" id="s26">
+  <div class="section-header">
+    <span class="section-num">26</span>
+    <span class="section-title">Master Summary — Full Document Index</span>
+  </div>
+
+  <p>This three-part series forms a complete, production-ready implementation blueprint. Here is the full section index across all three documents:</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Part 1 — Architecture</h3>
+      <table>
+        <tr><th>#</th><th>Section</th></tr>
+        <tr><td>01</td><td>Project Overview & Problem Analysis</td></tr>
+        <tr><td>02</td><td>System Architecture (Fig 1)</td></tr>
+        <tr><td>03</td><td>Backend Deep-Dive — Cloud Functions (Fig 2)</td></tr>
+        <tr><td>04</td><td>Flutter App Architecture — Clean Architecture (Fig 3)</td></tr>
+        <tr><td>05</td><td>Data Flow Pipeline — Issue Lifecycle (Fig 4)</td></tr>
+        <tr><td>06</td><td>Database Schema — Firestore (Fig 5)</td></tr>
+        <tr><td>07</td><td>Feature Modules</td></tr>
+        <tr><td>08</td><td>Gamification Engine (Fig 6)</td></tr>
+        <tr><td>09</td><td>API Contract</td></tr>
+        <tr><td>10</td><td>12-Week Development Roadmap</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Part 2 — Code</h3>
+      <table>
+        <tr><th>#</th><th>Section</th></tr>
+        <tr><td>11</td><td>Screen-by-Screen UI Specs (6 screens)</td></tr>
+        <tr><td>12</td><td>Flutter BLoC — SpotBloc, ReportBloc</td></tr>
+        <tr><td>13</td><td>Domain Layer — Entities & Use Cases</td></tr>
+        <tr><td>14</td><td>Data Layer — Repository + Model + DI</td></tr>
+        <tr><td>15</td><td>Cloud Functions TypeScript — onCheckIn, onIssueReport, redeemCoupon</td></tr>
+        <tr><td>16</td><td>Testing Strategy — Unit, Widget, E2E, Jest</td></tr>
+        <tr><td>17</td><td>CI/CD — GitHub Actions (4 jobs)</td></tr>
+        <tr><td>18</td><td>Deployment Checklist + Pilot Launch Plan</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h3>Part 3 — Dashboard & Launch</h3>
+  <table>
+    <tr><th>#</th><th>Section</th></tr>
+    <tr><td>19</td><td>Municipal Web Dashboard — Full spec, mockup, Flutter Web code</td></tr>
+    <tr><td>20</td><td>Anti-Gaming & Fraud Prevention — 6 attack vectors + defences + scheduled Cloud Function</td></tr>
+    <tr><td>21</td><td>Monetization Strategy — 3 revenue streams, pricing tiers, revenue projection</td></tr>
+    <tr><td>22</td><td>Privacy & Legal Compliance — DPDP Act 2023</td></tr>
+    <tr><td>23</td><td>Complete pubspec.yaml — all 30+ packages with versions</td></tr>
+    <tr><td>24</td><td>Project Bootstrap Guide — 5-step setup from zero to running app</td></tr>
+    <tr><td>25</td><td>Scaling Beyond Pilot — 4 phases + Firebase cost estimate</td></tr>
+    <tr><td>26</td><td>Master Summary (this section)</td></tr>
+  </table>
+
+  <div class="info-box purple" style="margin-top:24px">
+    <strong>For your portfolio / SIH submission:</strong> This project checks every box — real social impact, AI integration (Gemini Flash), full-stack mobile (Flutter + Firebase), gamification design, civic-tech domain, and a clear monetisation path. Add the GitHub link to your resume under Projects with this tagline: <em>"Gamified civic maintenance platform — Flutter + Firebase + Gemini AI — adopted by citizens, monitored by municipalities in real time."</em>
+  </div>
+
+  <div class="card-grid" style="margin-top:20px">
+    <div class="card-sm"><div class="label">Total Sections</div><div class="value" style="color:var(--purple)">26</div></div>
+    <div class="card-sm"><div class="label">Architecture Diagrams</div><div class="value" style="color:var(--blue)">6</div></div>
+    <div class="card-sm"><div class="label">Code Snippets</div><div class="value" style="color:var(--teal)">22</div></div>
+    <div class="card-sm"><div class="label">Flutter Packages</div><div class="value" style="color:var(--green)">30+</div></div>
+    <div class="card-sm"><div class="label">Cloud Functions</div><div class="value" style="color:var(--amber)">7</div></div>
+    <div class="card-sm"><div class="label">Est. Build Time</div><div class="value" style="color:var(--coral)">12 wks</div></div>
+  </div>
+</div>
+
+</div><!-- end .page -->
+
+<div style="background:#1e2330;color:#6e7a9a;text-align:center;padding:18px;font-size:12px;margin-top:40px;">
+  Adopt-a-Spot Implementation Document · Part 3 (Final) · Shashvat Tripathi · NIET, Greater Noida · shashvattripathi97@gmail.com · June 2026
+</div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "adopt-a-spot-prod"
+  },
+  "targets": {
+    "adopt-a-spot-prod": {
+      "hosting": {
+        "dashboard": ["adopt-a-spot-dashboard"]
+      }
+    }
+  }
+}

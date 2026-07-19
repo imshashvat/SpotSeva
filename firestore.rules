@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ───────────────────────────────────────
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return request.auth.uid == uid; }
+    function isMunicipal() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'municipal';
+    }
+    function isFieldWorker() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'field_worker';
+    }
+    function notFlagged() {
+      return !get(/databases/$(database)/documents/users/$(request.auth.uid)).data.flagged;
+    }
+
+    // ── users ─────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isMunicipal();
+      allow delete: if false; // Only via Cloud Functions
+    }
+
+    // ── wallets ───────────────────────────────────────────────
+    match /wallets/{userId} {
+      // Citizens can read their own wallet (real-time stream)
+      allow read: if isOwner(userId);
+      // NO direct writes — all points awarded via Cloud Functions only
+      allow write: if false;
+    }
+
+    // ── spots ─────────────────────────────────────────────────
+    match /spots/{spotId} {
+      allow read: if true; // Public map is read-only
+      // Citizens can't write directly — use Cloud Functions (adoptSpot, releaseSpot)
+      allow create: if isMunicipal();
+      allow update: if isMunicipal() || isFieldWorker();
+      allow delete: if isMunicipal();
+    }
+
+    // ── reports ───────────────────────────────────────────────
+    match /reports/{reportId} {
+      // Anyone signed in can read reports for a spot they're viewing
+      allow read: if isSignedIn();
+      // Reports are created via Cloud Function only (submitReport)
+      allow create: if false;
+      // Status updates allowed by municipal/field worker
+      allow update: if isMunicipal() || isFieldWorker();
+      allow delete: if isMunicipal();
+    }
+
+    // ── checkins ──────────────────────────────────────────────
+    match /checkins/{checkinId} {
+      // Users can read their own checkins
+      allow read: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid || isMunicipal());
+      // Created only via checkIn Cloud Function
+      allow write: if false;
+    }
+
+    // ── rewards ───────────────────────────────────────────────
+    match /rewards/{rewardId} {
+      allow read: if true; // Public rewards catalogue
+      allow write: if isMunicipal();
+    }
+
+    // ── leaderboard ───────────────────────────────────────────
+    match /leaderboard/{userId} {
+      allow read: if true; // Public leaderboard
+      // Written only by Cloud Functions (computeLeaderboard)
+      allow write: if false;
+    }
+
+    // ── redemptions ───────────────────────────────────────────
+    match /redemptions/{redemptionId} {
+      // Users can read their own redemptions
+      allow read: if isSignedIn() &&
+        resource.data.userId == request.auth.uid;
+      // Created only via redeemCoupon Cloud Function
+      allow write: if false;
+    }
+
+    // ── fcmTokens ─────────────────────────────────────────────
+    match /fcmTokens/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+  }
+}

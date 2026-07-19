@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "308526071935",
+    "project_id": "adopt-a-spot-prod",
+    "storage_bucket": "adopt-a-spot-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308526071935:android:e0ac0b8fdffe9651b2ff4a",
+        "android_client_info": {
+          "package_name": "com.shashvat.adoptASpot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "308526071935-i2f5a85o9e0judsvnlqqmq8ob85288nq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUMMY_KEY_PLACEHOLDER_SPOTSEVA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "308526071935-i2f5a85o9e0judsvnlqqmq8ob85288nq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

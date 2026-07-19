@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adopt-a-Spot — Complete Implementation Document</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink2: #3d3d3a;
+    --ink3: #72716b;
+    --surface: #ffffff;
+    --surface2: #f5f4f0;
+    --surface3: #edecea;
+    --border: rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.18);
+    --green: #2e7d52;
+    --green-bg: #e8f5ee;
+    --teal: #0f6e56;
+    --teal-bg: #e1f5ee;
+    --blue: #185fa5;
+    --blue-bg: #e6f1fb;
+    --amber: #854f0b;
+    --amber-bg: #faeeda;
+    --coral: #993c1d;
+    --coral-bg: #faece7;
+    --purple: #534ab7;
+    --purple-bg: #eeedfe;
+    --red: #a32d2d;
+    --red-bg: #fcebeb;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+    background: var(--surface2);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(135deg, #0f6e56 0%, #185fa5 100%);
+    color: #fff;
+    padding: 72px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.1);
+    top: -200px; right: -100px;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.08);
+    bottom: -120px; left: 200px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    margin-bottom: 20px;
+  }
+  .cover h1 {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .cover h1 span { opacity: 0.7; font-weight: 400; }
+  .cover-sub {
+    font-size: 18px;
+    opacity: 0.8;
+    margin-bottom: 32px;
+  }
+  .cover-meta {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    font-size: 13px; opacity: 0.7;
+  }
+  .cover-meta span::before { content: '◆ '; font-size: 8px; vertical-align: 2px; }
+
+  /* ── Layout ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin: 32px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 32px;
+  }
+  .toc-title {
+    grid-column: 1/-1;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 12px;
+  }
+  .toc a {
+    color: var(--blue);
+    text-decoration: none;
+    font-size: 13.5px;
+    display: flex; align-items: center; gap: 6px;
+    padding: 3px 0;
+  }
+  .toc a:hover { text-decoration: underline; }
+  .toc-num { color: var(--ink3); font-size: 11px; min-width: 20px; }
+
+  /* ── Section headings ── */
+  .section {
+    margin-top: 48px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--surface3);
+  }
+  .section-num {
+    background: var(--teal);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 2px 8px;
+    min-width: 28px;
+    text-align: center;
+  }
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 24px 0 10px;
+    color: var(--ink);
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 16px 0 8px;
+    color: var(--ink2);
+  }
+  p { margin-bottom: 12px; color: var(--ink2); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .card-sm {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+  }
+  .card-sm .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink3);
+    margin-bottom: 4px;
+  }
+  .card-sm .value {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-right: 4px;
+    margin-bottom: 4px;
+  }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-blue  { background: var(--blue-bg);  color: var(--blue);  }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-coral { background: var(--coral-bg); color: var(--coral); }
+  .badge-purple{ background: var(--purple-bg);color: var(--purple);}
+  .badge-teal  { background: var(--teal-bg);  color: var(--teal);  }
+  .badge-red   { background: var(--red-bg);   color: var(--red);   }
+
+  /* ── Diagram container ── */
+  .diagram-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .diagram-caption {
+    font-size: 12px;
+    color: var(--ink3);
+    text-align: center;
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* ── Code blocks ── */
+  pre {
+    background: #1e2330;
+    color: #d4d8e8;
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    font-size: 12.5px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    overflow-x: auto;
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+  .kw { color: #7eb8f7; }
+  .fn { color: #82cfb5; }
+  .str { color: #f0bc72; }
+  .cm { color: #6e7a9a; font-style: italic; }
+  .tp { color: #d4a8f0; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+  th {
+    background: var(--surface3);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 10px 14px;
+    text-align: left;
+    color: var(--ink2);
+    border-bottom: 1px solid var(--border2);
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--ink2); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  /* ── Info boxes ── */
+  .info-box {
+    border-left: 3px solid;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13.5px;
+  }
+  .info-box.green  { border-color: var(--green);  background: var(--green-bg);  color: var(--green);  }
+  .info-box.blue   { border-color: var(--blue);   background: var(--blue-bg);   color: var(--blue);   }
+  .info-box.amber  { border-color: var(--amber);  background: var(--amber-bg);  color: var(--amber);  }
+  .info-box.coral  { border-color: var(--coral);  background: var(--coral-bg);  color: var(--coral);  }
+  .info-box.purple { border-color: var(--purple); background: var(--purple-bg); color: var(--purple); }
+  .info-box strong { font-weight: 600; }
+
+  /* ── Feature list ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    border-top: 3px solid;
+  }
+  .feature-card h4 { margin-top: 0; }
+  .feature-card p { font-size: 13px; margin-bottom: 0; }
+  .fc-green  { border-top-color: var(--green);  }
+  .fc-blue   { border-top-color: var(--blue);   }
+  .fc-amber  { border-top-color: var(--amber);  }
+  .fc-coral  { border-top-color: var(--coral);  }
+  .fc-purple { border-top-color: var(--purple); }
+  .fc-teal   { border-top-color: var(--teal);   }
+
+  /* ── Timeline ── */
+  .timeline { margin: 16px 0; }
+  .tl-item {
+    display: flex; gap: 16px; margin-bottom: 12px;
+  }
+  .tl-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .tl-content { padding-top: 6px; }
+  .tl-content strong { display: block; font-size: 14px; margin-bottom: 2px; }
+  .tl-content span { font-size: 13px; color: var(--ink3); }
+
+  /* ── Stack pills ── */
+  .stack-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .stack-pill {
+    font-size: 12px; font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+
+  /* ── Print/screen ── */
+  @media print {
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .diagram-wrap svg { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─────────────── COVER ─────────────── -->
+<div class="cover">
+  <div class="cover-badge">Mobile App · Implementation Document</div>
+  <h1>Adopt-a-Spot <span>/ Civic Maintenance Platform</span></h1>
+  <p class="cover-sub">Gamified citizen engagement for smarter, cleaner public spaces</p>
+  <div class="cover-meta">
+    <span>Flutter · Firebase · Google Maps SDK</span>
+    <span>Version 1.0 — June 2026</span>
+    <span>Shashvat Tripathi</span>
+    <span>NIET, Greater Noida</span>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ─────────────── TOC ─────────────── -->
+<div class="toc">
+  <div class="toc-title">Table of Contents</div>
+  <a href="#s1"><span class="toc-num">01</span> Project Overview & Problem Analysis</a>
+  <a href="#s6"><span class="toc-num">06</span> Database Schema (ERD)</a>
+  <a href="#s2"><span class="toc-num">02</span> System Architecture Overview</a>
+  <a href="#s7"><span class="toc-num">07</span> Feature Modules</a>
+  <a href="#s3"><span class="toc-num">03</span> Backend Architecture Deep-Dive</a>
+  <a href="#s8"><span class="toc-num">08</span> Gamification Engine</a>
+  <a href="#s4"><span class="toc-num">04</span> Flutter App Architecture</a>
+  <a href="#s9"><span class="toc-num">09</span> API Contract</a>
+  <a href="#s5"><span class="toc-num">05</span> Data Flow Pipeline</a>
+  <a href="#s10"><span class="toc-num">10</span> Development Roadmap</a>
+</div>
+
+<!-- ─────────────── 01 OVERVIEW ─────────────── -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">Project Overview & Problem Analysis</span>
+  </div>
+
+  <p><strong>Adopt-a-Spot</strong> is a gamified civic maintenance mobile application built on Flutter + Firebase. Citizens "adopt" public micro-spots (a bench, a bus stop, a park entrance), perform digital check-ins, report issues with photos, and earn redeemable reward points. Municipal bodies gain a real-time, crowdsourced map of urban micro-issues — dramatically cutting complaint-to-fix response time.</p>
+
+  <div class="info-box blue"><strong>Core Problem:</strong> Municipal corporations remain unaware of micro-degradation events (broken bench, fallen tree, blocked drain) until formal complaints trickle in — often weeks later. Adopt-a-Spot converts every citizen who passes a public spot into a real-time sensor.</div>
+
+  <div class="card-grid">
+    <div class="card-sm"><div class="label">Target Users</div><div class="value" style="font-size:18px;color:var(--green)">Citizens + Municipal Corps</div></div>
+    <div class="card-sm"><div class="label">Platform</div><div class="value" style="font-size:18px;color:var(--blue)">Android + iOS (Flutter)</div></div>
+    <div class="card-sm"><div class="label">Backend</div><div class="value" style="font-size:18px;color:var(--teal)">Firebase BaaS</div></div>
+    <div class="card-sm"><div class="label">Maps</div><div class="value" style="font-size:18px;color:var(--amber)">Google Maps SDK</div></div>
+  </div>
+
+  <h3>Problem → Solution Mapping</h3>
+  <table>
+    <tr><th>Pain Point</th><th>Root Cause</th><th>Adopt-a-Spot Solution</th></tr>
+    <tr><td>Slow complaint cycle (weeks)</td><td>Centralised, single-entry reporting</td><td>Distributed micro-reporting by adopted citizens at each spot</td></tr>
+    <tr><td>No visual issue evidence</td><td>Text-only formal complaints</td><td>Mandatory photo + GPS stamp on every report</td></tr>
+    <tr><td>Citizen apathy</td><td>No incentive, no feedback loop</td><td>Points → local business coupons + community leaderboard</td></tr>
+    <tr><td>Municipal resource waste</td><td>Blind deployment of field teams</td><td>AI-triaged priority heatmap for field crew routing</td></tr>
+    <tr><td>No issue lifecycle visibility</td><td>Reports disappear into a black box</td><td>Real-time status tracker per report (Open → In-Progress → Resolved)</td></tr>
+  </table>
+</div>
+
+<!-- ─────────────── 02 ARCHITECTURE OVERVIEW ─────────────── -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">System Architecture Overview</span>
+  </div>
+
+  <p>The platform uses a layered, event-driven architecture with three actor tiers: <strong>Citizens</strong>, <strong>Municipal Dashboard</strong>, and <strong>Firebase Cloud</strong>. All state flows upward through Firestore real-time listeners; background logic executes in Cloud Functions triggered by database events or HTTP calls.</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 860 620" role="img">
+      <title>Adopt-a-Spot System Architecture Overview</title>
+      <desc>Three-layer system: Flutter apps on the left, Firebase backend in the centre, external services on the right</desc>
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Layer labels -->
+      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="0.08em" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">CLIENT LAYER</text>
+      <text x="440" y="34" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="0.08em" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">FIREBASE BACKEND</text>
+      <text x="760" y="34" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="0.08em" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">EXTERNAL SERVICES</text>
+
+      <!-- vertical dividers -->
+      <line x1="230" y1="44" x2="230" y2="595" stroke="#e0dfd8" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="640" y1="44" x2="640" y2="595" stroke="#e0dfd8" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- ── CLIENT LAYER ── -->
+      <!-- Citizen App -->
+      <rect x="30" y="60" width="180" height="80" rx="10" fill="#e1f5ee" stroke="#0f6e56" stroke-width="1"/>
+      <text x="120" y="88" text-anchor="middle" font-size="13" font-weight="600" fill="#085041" font-family="Segoe UI,Arial,sans-serif">Citizen App</text>
+      <text x="120" y="106" text-anchor="middle" font-size="11" fill="#0f6e56" font-family="Segoe UI,Arial,sans-serif">Flutter (Android / iOS)</text>
+      <text x="120" y="122" text-anchor="middle" font-size="10" fill="#1d9e75" font-family="Segoe UI,Arial,sans-serif">Check-in · Report · Rewards</text>
+
+      <!-- Municipal Dashboard -->
+      <rect x="30" y="180" width="180" height="80" rx="10" fill="#e6f1fb" stroke="#185fa5" stroke-width="1"/>
+      <text x="120" y="208" text-anchor="middle" font-size="13" font-weight="600" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">Municipal Dashboard</text>
+      <text x="120" y="226" text-anchor="middle" font-size="11" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">Flutter Web / Admin Panel</text>
+      <text x="120" y="242" text-anchor="middle" font-size="10" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">Heatmap · Assign · Track</text>
+
+      <!-- Business Portal -->
+      <rect x="30" y="300" width="180" height="80" rx="10" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+      <text x="120" y="328" text-anchor="middle" font-size="13" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Business Portal</text>
+      <text x="120" y="346" text-anchor="middle" font-size="11" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">Flutter Web (simple)</text>
+      <text x="120" y="362" text-anchor="middle" font-size="10" fill="#ba7517" font-family="Segoe UI,Arial,sans-serif">Coupons · Analytics</text>
+
+      <!-- ── FIREBASE LAYER ── -->
+      <!-- Firebase Auth -->
+      <rect x="255" y="60" width="155" height="60" rx="8" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="332" y="86" text-anchor="middle" font-size="12" font-weight="600" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">Firebase Auth</text>
+      <text x="332" y="104" text-anchor="middle" font-size="10" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">Google · Phone · Email</text>
+
+      <!-- Firestore -->
+      <rect x="255" y="155" width="155" height="60" rx="8" fill="#e1f5ee" stroke="#0f6e56" stroke-width="1"/>
+      <text x="332" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">Cloud Firestore</text>
+      <text x="332" y="199" text-anchor="middle" font-size="10" fill="#0f6e56" font-family="Segoe UI,Arial,sans-serif">Real-time NoSQL DB</text>
+
+      <!-- Cloud Storage -->
+      <rect x="255" y="250" width="155" height="60" rx="8" fill="#e6f1fb" stroke="#185fa5" stroke-width="1"/>
+      <text x="332" y="276" text-anchor="middle" font-size="12" font-weight="600" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">Cloud Storage</text>
+      <text x="332" y="294" text-anchor="middle" font-size="10" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">Issue photos + media</text>
+
+      <!-- Cloud Functions -->
+      <rect x="255" y="345" width="155" height="60" rx="8" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+      <text x="332" y="371" text-anchor="middle" font-size="12" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Cloud Functions</text>
+      <text x="332" y="389" text-anchor="middle" font-size="10" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">Business logic triggers</text>
+
+      <!-- FCM -->
+      <rect x="255" y="440" width="155" height="60" rx="8" fill="#faece7" stroke="#993c1d" stroke-width="1"/>
+      <text x="332" y="466" text-anchor="middle" font-size="12" font-weight="600" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">Firebase FCM</text>
+      <text x="332" y="484" text-anchor="middle" font-size="10" fill="#993c1d" font-family="Segoe UI,Arial,sans-serif">Push notifications</text>
+
+      <!-- Firestore Analytics -->
+      <rect x="255" y="535" width="155" height="50" rx="8" fill="#eaf3de" stroke="#3b6d11" stroke-width="1"/>
+      <text x="332" y="558" text-anchor="middle" font-size="12" font-weight="600" fill="#173404" font-family="Segoe UI,Arial,sans-serif">Firebase Analytics</text>
+      <text x="332" y="574" text-anchor="middle" font-size="10" fill="#3b6d11" font-family="Segoe UI,Arial,sans-serif">User events + funnels</text>
+
+      <!-- ── MIDDLE TIER (orchestration) ── -->
+      <rect x="440" y="155" width="175" height="250" rx="10" fill="#f5f4f0" stroke="#b4b2a9" stroke-width="1" stroke-dasharray="5 3"/>
+      <text x="527" y="180" text-anchor="middle" font-size="11" font-weight="600" fill="#5f5e5a" letter-spacing="0.07em" font-family="Segoe UI,Arial,sans-serif">CLOUD FUNCTIONS LOGIC</text>
+      <!-- inner boxes -->
+      <rect x="455" y="190" width="145" height="38" rx="6" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+      <text x="527" y="213" text-anchor="middle" font-size="11" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">Points Engine</text>
+      <rect x="455" y="238" width="145" height="38" rx="6" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="527" y="261" text-anchor="middle" font-size="11" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">Issue Triage &amp; AI Tag</text>
+      <rect x="455" y="286" width="145" height="38" rx="6" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="527" y="309" text-anchor="middle" font-size="11" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Notification Dispatch</text>
+      <rect x="455" y="334" width="145" height="38" rx="6" fill="#faece7" stroke="#993c1d" stroke-width="0.8"/>
+      <text x="527" y="357" text-anchor="middle" font-size="11" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">Coupon Redemption</text>
+      <rect x="455" y="382" width="145" height="38" rx="6" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.8"/>
+      <text x="527" y="405" text-anchor="middle" font-size="11" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">Leaderboard Compute</text>
+
+      <!-- ── EXTERNAL SERVICES ── -->
+      <!-- Google Maps -->
+      <rect x="665" y="60" width="175" height="60" rx="8" fill="#e6f1fb" stroke="#185fa5" stroke-width="1"/>
+      <text x="752" y="86" text-anchor="middle" font-size="12" font-weight="600" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">Google Maps SDK</text>
+      <text x="752" y="104" text-anchor="middle" font-size="10" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">Map · Geocode · Place API</text>
+
+      <!-- Gemini AI -->
+      <rect x="665" y="155" width="175" height="60" rx="8" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="752" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">Gemini Flash API</text>
+      <text x="752" y="199" text-anchor="middle" font-size="10" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">Issue photo classification</text>
+
+      <!-- Razorpay -->
+      <rect x="665" y="250" width="175" height="60" rx="8" fill="#e1f5ee" stroke="#0f6e56" stroke-width="1"/>
+      <text x="752" y="276" text-anchor="middle" font-size="12" font-weight="600" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">Payment Gateway</text>
+      <text x="752" y="294" text-anchor="middle" font-size="10" fill="#0f6e56" font-family="Segoe UI,Arial,sans-serif">Razorpay (business billing)</text>
+
+      <!-- SendGrid -->
+      <rect x="665" y="345" width="175" height="60" rx="8" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+      <text x="752" y="371" text-anchor="middle" font-size="12" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Email Service</text>
+      <text x="752" y="389" text-anchor="middle" font-size="10" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">SendGrid (reports, digests)</text>
+
+      <!-- ── ARROWS: Client → Firebase ── -->
+      <!-- Citizen → Auth -->
+      <line x1="210" y1="90" x2="253" y2="88" stroke="#0f6e56" stroke-width="1.2" marker-end="url(#arr)"/>
+      <!-- Citizen → Firestore -->
+      <line x1="210" y1="110" x2="240" y2="185" stroke="#0f6e56" stroke-width="1.2" marker-end="url(#arr)"/>
+      <line x1="240" y1="185" x2="253" y2="185" stroke="#0f6e56" stroke-width="1.2" marker-end="url(#arr)"/>
+      <!-- Municipal → Firestore -->
+      <line x1="210" y1="220" x2="253" y2="200" stroke="#185fa5" stroke-width="1.2" marker-end="url(#arr)"/>
+      <!-- Business → Functions -->
+      <line x1="210" y1="340" x2="253" y2="370" stroke="#854f0b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+      <!-- ── ARROWS: Firebase → CF Logic ── -->
+      <line x1="410" y1="185" x2="453" y2="250" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <line x1="410" y1="375" x2="453" y2="350" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+      <!-- ── ARROWS: CF Logic → External ── -->
+      <line x1="617" y1="210" x2="663" y2="185" stroke="#534ab7" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="617" y1="305" x2="663" y2="290" stroke="#0f6e56" stroke-width="1" marker-end="url(#arr)"/>
+      <line x1="617" y1="355" x2="663" y2="365" stroke="#854f0b" stroke-width="1" marker-end="url(#arr)"/>
+
+      <!-- Maps → Citizen App (back arrow) -->
+      <path d="M752 120L752 140L120 140L120 58" fill="none" stroke="#185fa5" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#arr)"/>
+
+      <!-- FCM → both apps -->
+      <path d="M254 470L120 470L120 260" fill="none" stroke="#993c1d" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    </svg>
+    <div class="diagram-caption">Fig 1. Adopt-a-Spot — Complete System Architecture. Arrows show primary data flows; dashed = async/event-driven.</div>
+  </div>
+</div>
+
+<!-- ─────────────── 03 BACKEND DEEP DIVE ─────────────── -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">Backend Architecture Deep-Dive</span>
+  </div>
+
+  <p>The backend is <strong>serverless-first</strong>: Firebase acts as the infrastructure layer, Cloud Functions handle all business logic, and Firestore security rules act as the API gateway. This eliminates server management, scales infinitely, and keeps costs near-zero at indie scale.</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 860 500" role="img">
+      <title>Backend Cloud Functions Pipeline</title>
+      <desc>Six Cloud Function triggers and their downstream effects: write, checkin, report, points, notify, redeem</desc>
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Title row -->
+      <text x="430" y="28" text-anchor="middle" font-size="13" font-weight="600" fill="#1a1a1a" font-family="Segoe UI,Arial,sans-serif">Cloud Functions Trigger Pipeline</text>
+
+      <!-- Trigger column label -->
+      <text x="100" y="54" text-anchor="middle" font-size="10" font-weight="600" letter-spacing="0.07em" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">TRIGGER EVENT</text>
+      <text x="330" y="54" text-anchor="middle" font-size="10" font-weight="600" letter-spacing="0.07em" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">FUNCTION</text>
+      <text x="570" y="54" text-anchor="middle" font-size="10" font-weight="600" letter-spacing="0.07em" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">EFFECT / OUTPUT</text>
+
+      <!-- Row 1: User registers -->
+      <rect x="20" y="65" width="165" height="44" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+      <text x="102" y="83" text-anchor="middle" font-size="12" font-weight="600" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">Auth: User Created</text>
+      <text x="102" y="99" text-anchor="middle" font-size="10" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">Firebase Auth trigger</text>
+      <line x1="185" y1="87" x2="238" y2="87" stroke="#534ab7" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="240" y="65" width="175" height="44" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="0.8"/>
+      <text x="327" y="87" text-anchor="middle" font-size="11" font-weight="600" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">onUserCreate()</text>
+      <line x1="415" y1="87" x2="448" y2="87" stroke="#534ab7" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="450" y="65" width="385" height="44" rx="7" fill="#f5f3ff" stroke="#534ab7" stroke-width="0.8"/>
+      <text x="642" y="83" text-anchor="middle" font-size="11" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">Create user profile doc · Init points wallet</text>
+      <text x="642" y="99" text-anchor="middle" font-size="10" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">Send welcome notification · Assign onboarding badge</text>
+
+      <!-- Row 2: Spot Adoption -->
+      <rect x="20" y="130" width="165" height="44" rx="7" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="102" y="148" text-anchor="middle" font-size="12" font-weight="600" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">Firestore Write</text>
+      <text x="102" y="164" text-anchor="middle" font-size="10" fill="#0f6e56" font-family="Segoe UI,Arial,sans-serif">adoptions/{id} onCreate</text>
+      <line x1="185" y1="152" x2="238" y2="152" stroke="#0f6e56" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="240" y="130" width="175" height="44" rx="7" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="327" y="152" text-anchor="middle" font-size="11" font-weight="600" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">onSpotAdopt()</text>
+      <line x1="415" y1="152" x2="448" y2="152" stroke="#0f6e56" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="450" y="130" width="385" height="44" rx="7" fill="#edf9f3" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="642" y="148" text-anchor="middle" font-size="11" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">Update spot.adopter_id · Lock spot (cooldown 7 days)</text>
+      <text x="642" y="164" text-anchor="middle" font-size="10" fill="#0f6e56" font-family="Segoe UI,Arial,sans-serif">Award 50 pts · Notify nearby adopters</text>
+
+      <!-- Row 3: Check-in -->
+      <rect x="20" y="195" width="165" height="44" rx="7" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="102" y="213" text-anchor="middle" font-size="12" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Firestore Write</text>
+      <text x="102" y="229" text-anchor="middle" font-size="10" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">checkins/{id} onCreate</text>
+      <line x1="185" y1="217" x2="238" y2="217" stroke="#854f0b" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="240" y="195" width="175" height="44" rx="7" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="327" y="217" text-anchor="middle" font-size="11" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">onCheckIn()</text>
+      <line x1="415" y1="217" x2="448" y2="217" stroke="#854f0b" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="450" y="195" width="385" height="44" rx="7" fill="#fef7ec" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="642" y="213" text-anchor="middle" font-size="11" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Validate GPS proximity (100m) · Update spot.last_seen</text>
+      <text x="642" y="229" text-anchor="middle" font-size="10" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">Award 10 pts · Update streak · Trigger leaderboard recompute</text>
+
+      <!-- Row 4: Issue Report -->
+      <rect x="20" y="260" width="165" height="44" rx="7" fill="#faece7" stroke="#993c1d" stroke-width="0.8"/>
+      <text x="102" y="278" text-anchor="middle" font-size="12" font-weight="600" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">Firestore Write</text>
+      <text x="102" y="294" text-anchor="middle" font-size="10" fill="#993c1d" font-family="Segoe UI,Arial,sans-serif">reports/{id} onCreate</text>
+      <line x1="185" y1="282" x2="238" y2="282" stroke="#993c1d" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="240" y="260" width="175" height="44" rx="7" fill="#faece7" stroke="#993c1d" stroke-width="0.8"/>
+      <text x="327" y="282" text-anchor="middle" font-size="11" font-weight="600" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">onIssueReport()</text>
+      <line x1="415" y1="282" x2="448" y2="282" stroke="#993c1d" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="450" y="260" width="385" height="44" rx="7" fill="#fdf1ee" stroke="#993c1d" stroke-width="0.8"/>
+      <text x="642" y="278" text-anchor="middle" font-size="11" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">Call Gemini Flash → classify issue + severity</text>
+      <text x="642" y="294" text-anchor="middle" font-size="10" fill="#993c1d" font-family="Segoe UI,Arial,sans-serif">Update spot.status · Award 25 pts · Alert municipal board</text>
+
+      <!-- Row 5: Status Update -->
+      <rect x="20" y="325" width="165" height="44" rx="7" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.8"/>
+      <text x="102" y="343" text-anchor="middle" font-size="12" font-weight="600" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">Firestore Update</text>
+      <text x="102" y="359" text-anchor="middle" font-size="10" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">reports/{id}.status change</text>
+      <line x1="185" y1="347" x2="238" y2="347" stroke="#185fa5" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="240" y="325" width="175" height="44" rx="7" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.8"/>
+      <text x="327" y="347" text-anchor="middle" font-size="11" font-weight="600" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">onStatusChange()</text>
+      <line x1="415" y1="347" x2="448" y2="347" stroke="#185fa5" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="450" y="325" width="385" height="44" rx="7" fill="#edf4fc" stroke="#185fa5" stroke-width="0.8"/>
+      <text x="642" y="343" text-anchor="middle" font-size="11" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">Push FCM to reporter: "Your report is Resolved 🎉"</text>
+      <text x="642" y="359" text-anchor="middle" font-size="10" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">If resolved → award 50 bonus pts · Update heatmap tile</text>
+
+      <!-- Row 6: Coupon Redeem -->
+      <rect x="20" y="390" width="165" height="44" rx="7" fill="#eaf3de" stroke="#3b6d11" stroke-width="0.8"/>
+      <text x="102" y="408" text-anchor="middle" font-size="12" font-weight="600" fill="#173404" font-family="Segoe UI,Arial,sans-serif">HTTP Request</text>
+      <text x="102" y="424" text-anchor="middle" font-size="10" fill="#3b6d11" font-family="Segoe UI,Arial,sans-serif">POST /redeemCoupon</text>
+      <line x1="185" y1="412" x2="238" y2="412" stroke="#3b6d11" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="240" y="390" width="175" height="44" rx="7" fill="#eaf3de" stroke="#3b6d11" stroke-width="0.8"/>
+      <text x="327" y="412" text-anchor="middle" font-size="11" font-weight="600" fill="#173404" font-family="Segoe UI,Arial,sans-serif">onCouponRedeem()</text>
+      <line x1="415" y1="412" x2="448" y2="412" stroke="#3b6d11" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="450" y="390" width="385" height="44" rx="7" fill="#f2f9eb" stroke="#3b6d11" stroke-width="0.8"/>
+      <text x="642" y="408" text-anchor="middle" font-size="11" fill="#173404" font-family="Segoe UI,Arial,sans-serif">Deduct pts (atomic transaction) · Mark coupon used</text>
+      <text x="642" y="424" text-anchor="middle" font-size="10" fill="#3b6d11" font-family="Segoe UI,Arial,sans-serif">Notify business partner · Send coupon code via FCM</text>
+
+      <!-- column dividers -->
+      <line x1="234" y1="58" x2="234" y2="445" stroke="#e0dfd8" stroke-width="0.8" stroke-dasharray="3 3"/>
+      <line x1="445" y1="58" x2="445" y2="445" stroke="#e0dfd8" stroke-width="0.8" stroke-dasharray="3 3"/>
+    </svg>
+    <div class="diagram-caption">Fig 2. Cloud Functions Trigger Pipeline — six event-driven functions covering the full citizen lifecycle.</div>
+  </div>
+
+  <h3>Firebase Security Rules Strategy</h3>
+  <pre><span class="cm">// Firestore Security Rules (simplified)</span>
+rules_version = <span class="str">'2'</span>;
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    <span class="cm">// Only authenticated users can read spots</span>
+    match /spots/{spotId} {
+      allow read: <span class="kw">if</span> request.auth != <span class="kw">null</span>;
+      allow write: <span class="kw">if</span> request.auth.uid == resource.data.adopter_id;
+    }
+
+    <span class="cm">// Reports: create by any logged-in user, update only by municipal role</span>
+    match /reports/{reportId} {
+      allow create: <span class="kw">if</span> request.auth != <span class="kw">null</span>;
+      allow update: <span class="kw">if</span> request.auth.token.role == <span class="str">'municipal'</span>;
+    }
+
+    <span class="cm">// Points wallet: read-only for user, write only via Cloud Functions</span>
+    match /wallets/{userId} {
+      allow read: <span class="kw">if</span> request.auth.uid == userId;
+      allow write: <span class="kw">if</span> <span class="kw">false</span>; <span class="cm">// Functions only</span>
+    }
+  }
+}</pre>
+</div>
+
+<!-- ─────────────── 04 FLUTTER ARCHITECTURE ─────────────── -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">Flutter App Architecture</span>
+  </div>
+
+  <p>The Flutter app follows <strong>Clean Architecture + BLoC state management</strong>. Three concentric layers — Data, Domain, Presentation — ensure testability, separation of concerns, and painless feature additions.</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 860 430" role="img">
+      <title>Flutter Clean Architecture Layers</title>
+      <desc>Three nested layers: Presentation (BLoC), Domain (Use Cases), Data (Repositories and Firebase)</desc>
+      <defs>
+        <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Layer containers (nested) -->
+      <!-- Presentation -->
+      <rect x="20" y="30" width="820" height="380" rx="14" fill="#fdf6ee" stroke="#854f0b" stroke-width="1.2"/>
+      <text x="44" y="56" font-size="11" font-weight="700" letter-spacing="0.08em" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">PRESENTATION LAYER — Widgets + BLoC</text>
+
+      <!-- Domain -->
+      <rect x="40" y="70" width="780" height="280" rx="12" fill="#edf9f3" stroke="#0f6e56" stroke-width="1.2"/>
+      <text x="64" y="94" font-size="11" font-weight="700" letter-spacing="0.08em" fill="#0f6e56" font-family="Segoe UI,Arial,sans-serif">DOMAIN LAYER — Use Cases + Entities</text>
+
+      <!-- Data -->
+      <rect x="60" y="110" width="740" height="210" rx="10" fill="#edf4fc" stroke="#185fa5" stroke-width="1.2"/>
+      <text x="84" y="134" font-size="11" font-weight="700" letter-spacing="0.08em" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">DATA LAYER — Repositories + Firebase Sources</text>
+
+      <!-- Screens row (presentation) -->
+      <rect x="40" y="360" width="110" height="36" rx="6" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="95" y="381" text-anchor="middle" font-size="11" fill="#412402" font-family="Segoe UI,Arial,sans-serif">MapScreen</text>
+      <rect x="165" y="360" width="110" height="36" rx="6" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="220" y="381" text-anchor="middle" font-size="11" fill="#412402" font-family="Segoe UI,Arial,sans-serif">SpotDetailScreen</text>
+      <rect x="290" y="360" width="110" height="36" rx="6" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="345" y="381" text-anchor="middle" font-size="11" fill="#412402" font-family="Segoe UI,Arial,sans-serif">ReportScreen</text>
+      <rect x="415" y="360" width="110" height="36" rx="6" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="470" y="381" text-anchor="middle" font-size="11" fill="#412402" font-family="Segoe UI,Arial,sans-serif">ProfileScreen</text>
+      <rect x="540" y="360" width="110" height="36" rx="6" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="595" y="381" text-anchor="middle" font-size="11" fill="#412402" font-family="Segoe UI,Arial,sans-serif">LeaderboardScreen</text>
+      <rect x="665" y="360" width="110" height="36" rx="6" fill="#faeeda" stroke="#854f0b" stroke-width="0.8"/>
+      <text x="720" y="381" text-anchor="middle" font-size="11" fill="#412402" font-family="Segoe UI,Arial,sans-serif">RewardsScreen</text>
+
+      <!-- BLoC row (domain) -->
+      <rect x="60" y="264" width="108" height="36" rx="6" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="114" y="285" text-anchor="middle" font-size="11" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">MapBloc</text>
+      <rect x="183" y="264" width="108" height="36" rx="6" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="237" y="285" text-anchor="middle" font-size="11" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">SpotBloc</text>
+      <rect x="306" y="264" width="108" height="36" rx="6" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="360" y="285" text-anchor="middle" font-size="11" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">ReportBloc</text>
+      <rect x="429" y="264" width="108" height="36" rx="6" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="483" y="285" text-anchor="middle" font-size="11" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">AuthBloc</text>
+      <rect x="552" y="264" width="108" height="36" rx="6" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="606" y="285" text-anchor="middle" font-size="11" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">PointsBloc</text>
+      <rect x="675" y="264" width="108" height="36" rx="6" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="729" y="285" text-anchor="middle" font-size="11" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">RewardBloc</text>
+
+      <!-- Use Case row (domain) -->
+      <rect x="80" y="188" width="140" height="36" rx="6" fill="#d8f0e8" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="150" y="209" text-anchor="middle" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">GetNearbySpotsUseCase</text>
+      <rect x="240" y="188" width="140" height="36" rx="6" fill="#d8f0e8" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="310" y="209" text-anchor="middle" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">AdoptSpotUseCase</text>
+      <rect x="400" y="188" width="140" height="36" rx="6" fill="#d8f0e8" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="470" y="209" text-anchor="middle" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">SubmitReportUseCase</text>
+      <rect x="560" y="188" width="140" height="36" rx="6" fill="#d8f0e8" stroke="#0f6e56" stroke-width="0.8"/>
+      <text x="630" y="209" text-anchor="middle" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">RedeemCouponUseCase</text>
+
+      <!-- Repository row -->
+      <rect x="80" y="145" width="175" height="34" rx="6" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.8"/>
+      <text x="167" y="165" text-anchor="middle" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">SpotRepository</text>
+      <rect x="275" y="145" width="175" height="34" rx="6" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.8"/>
+      <text x="362" y="165" text-anchor="middle" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">ReportRepository</text>
+      <rect x="470" y="145" width="175" height="34" rx="6" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.8"/>
+      <text x="557" y="165" text-anchor="middle" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">UserRepository</text>
+      <rect x="655" y="145" width="125" height="34" rx="6" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.8"/>
+      <text x="717" y="165" text-anchor="middle" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">RewardRepository</text>
+
+      <!-- Dependency arrows (bottom-up, each layer depends on layer below) -->
+      <line x1="430" y1="322" x2="430" y2="302" stroke="#0f6e56" stroke-width="1" marker-end="url(#arr3)"/>
+      <text x="440" y="315" font-size="9" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">events/state</text>
+      <line x1="430" y1="225" x2="430" y2="182" stroke="#185fa5" stroke-width="1" marker-end="url(#arr3)"/>
+      <text x="440" y="210" font-size="9" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">calls use case</text>
+    </svg>
+    <div class="diagram-caption">Fig 3. Flutter Clean Architecture — Presentation → Domain → Data. Dependencies only point inward.</div>
+  </div>
+
+  <h3>Folder Structure</h3>
+  <pre><span class="cm">lib/
+├── core/
+│   ├── constants/          </span><span class="str">// colors, strings, routes</span>
+<span class="cm">│   ├── error/              </span><span class="str">// Failure classes</span>
+<span class="cm">│   └── utils/              </span><span class="str">// geo helpers, validators</span>
+<span class="cm">├── data/
+│   ├── datasources/        </span><span class="str">// FirebaseSpotRemote, FirebaseReportRemote</span>
+<span class="cm">│   ├── models/             </span><span class="str">// SpotModel, ReportModel (fromJson/toJson)</span>
+<span class="cm">│   └── repositories/       </span><span class="str">// SpotRepositoryImpl, ReportRepositoryImpl</span>
+<span class="cm">├── domain/
+│   ├── entities/           </span><span class="str">// Spot, Report, User, Reward (pure Dart)</span>
+<span class="cm">│   ├── repositories/       </span><span class="str">// abstract interfaces</span>
+<span class="cm">│   └── usecases/           </span><span class="str">// GetNearbySpots, AdoptSpot, SubmitReport…</span>
+<span class="cm">├── presentation/
+│   ├── bloc/               </span><span class="str">// MapBloc, SpotBloc, ReportBloc…</span>
+<span class="cm">│   ├── screens/            </span><span class="str">// MapScreen, ReportScreen, ProfileScreen…</span>
+<span class="cm">│   └── widgets/            </span><span class="str">// SpotCard, IssueChip, PointsBadge…</span>
+<span class="cm">└── main.dart               </span><span class="str">// DI setup via get_it + bloc providers</span></pre>
+</div>
+
+<!-- ─────────────── 05 DATA FLOW PIPELINE ─────────────── -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-title">Data Flow Pipeline</span>
+  </div>
+
+  <p>The critical path is: <em>Citizen checks in near a spot → reports an issue → Cloud Function classifies it → municipal receives alert → resolves it → citizen gets points.</em> This entire loop should complete in under 10 seconds end-to-end.</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 860 360" role="img">
+      <title>Issue Reporting Data Flow</title>
+      <desc>Left to right flow from citizen app through Firebase to municipal dashboard</desc>
+      <defs>
+        <marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Actor swimlanes -->
+      <rect x="20" y="40" width="820" height="68" rx="0" fill="#faeeda" stroke="#854f0b" stroke-width="0.5" opacity="0.5"/>
+      <rect x="20" y="108" width="820" height="68" rx="0" fill="#e1f5ee" stroke="#0f6e56" stroke-width="0.5" opacity="0.5"/>
+      <rect x="20" y="176" width="820" height="68" rx="0" fill="#eeedfe" stroke="#534ab7" stroke-width="0.5" opacity="0.5"/>
+      <rect x="20" y="244" width="820" height="68" rx="0" fill="#e6f1fb" stroke="#185fa5" stroke-width="0.5" opacity="0.5"/>
+
+      <!-- Swimlane labels -->
+      <text x="28" y="62" font-size="10" font-weight="600" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">Citizen App</text>
+      <text x="28" y="130" font-size="10" font-weight="600" fill="#0f6e56" font-family="Segoe UI,Arial,sans-serif">Firestore</text>
+      <text x="28" y="198" font-size="10" font-weight="600" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">Cloud Functions</text>
+      <text x="28" y="266" font-size="10" font-weight="600" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">Municipal Dashboard</text>
+
+      <!-- Step nodes (citizen lane) -->
+      <rect x="100" y="48" width="110" height="44" rx="7" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+      <text x="155" y="67" text-anchor="middle" font-size="11" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Open App</text>
+      <text x="155" y="82" text-anchor="middle" font-size="10" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">Auth check</text>
+
+      <rect x="250" y="48" width="130" height="44" rx="7" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+      <text x="315" y="67" text-anchor="middle" font-size="11" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Tap Adopted Spot</text>
+      <text x="315" y="82" text-anchor="middle" font-size="10" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">Maps SDK · GPS verify</text>
+
+      <rect x="430" y="48" width="130" height="44" rx="7" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+      <text x="495" y="67" text-anchor="middle" font-size="11" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Photo + Category</text>
+      <text x="495" y="82" text-anchor="middle" font-size="10" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">Camera · pick issue type</text>
+
+      <rect x="610" y="48" width="130" height="44" rx="7" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+      <text x="675" y="67" text-anchor="middle" font-size="11" font-weight="600" fill="#412402" font-family="Segoe UI,Arial,sans-serif">Submit Report</text>
+      <text x="675" y="82" text-anchor="middle" font-size="10" fill="#854f0b" font-family="Segoe UI,Arial,sans-serif">Upload + Firestore write</text>
+
+      <!-- Arrows in citizen lane -->
+      <line x1="210" y1="70" x2="248" y2="70" stroke="#854f0b" stroke-width="1.2" marker-end="url(#arr4)"/>
+      <line x1="380" y1="70" x2="428" y2="70" stroke="#854f0b" stroke-width="1.2" marker-end="url(#arr4)"/>
+      <line x1="560" y1="70" x2="608" y2="70" stroke="#854f0b" stroke-width="1.2" marker-end="url(#arr4)"/>
+
+      <!-- Drop to Firestore -->
+      <line x1="675" y1="92" x2="675" y2="115" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr4)"/>
+
+      <!-- Firestore step -->
+      <rect x="560" y="116" width="200" height="44" rx="7" fill="#e1f5ee" stroke="#0f6e56" stroke-width="1"/>
+      <text x="660" y="135" text-anchor="middle" font-size="11" font-weight="600" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">reports/{id} stored</text>
+      <text x="660" y="150" text-anchor="middle" font-size="10" fill="#0f6e56" font-family="Segoe UI,Arial,sans-serif">Storage: photo uploaded</text>
+
+      <!-- Drop to Cloud Functions -->
+      <line x1="660" y1="160" x2="660" y2="182" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr4)"/>
+
+      <!-- CF steps -->
+      <rect x="350" y="184" width="175" height="44" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="437" y="203" text-anchor="middle" font-size="11" font-weight="600" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">onIssueReport()</text>
+      <text x="437" y="218" text-anchor="middle" font-size="10" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">Gemini classify + severity</text>
+
+      <rect x="560" y="184" width="200" height="44" rx="7" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="660" y="203" text-anchor="middle" font-size="11" font-weight="600" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">Points + FCM dispatch</text>
+      <text x="660" y="218" text-anchor="middle" font-size="10" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">+25 pts · notify reporter</text>
+
+      <line x1="525" y1="206" x2="558" y2="206" stroke="#534ab7" stroke-width="1.2" marker-end="url(#arr4)"/>
+
+      <!-- CF → Firestore write back -->
+      <line x1="660" y1="184" x2="660" y2="162" stroke="#534ab7" stroke-width="0.8" stroke-dasharray="3 3" marker-end="url(#arr4)"/>
+
+      <!-- Drop to Municipal -->
+      <line x1="437" y1="228" x2="437" y2="250" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr4)"/>
+      <line x1="660" y1="228" x2="660" y2="250" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr4)"/>
+
+      <!-- Municipal steps -->
+      <rect x="320" y="252" width="175" height="44" rx="7" fill="#e6f1fb" stroke="#185fa5" stroke-width="1"/>
+      <text x="407" y="271" text-anchor="middle" font-size="11" font-weight="600" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">Alert on Heatmap</text>
+      <text x="407" y="286" text-anchor="middle" font-size="10" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">Priority badge on map tile</text>
+
+      <rect x="560" y="252" width="200" height="44" rx="7" fill="#e6f1fb" stroke="#185fa5" stroke-width="1"/>
+      <text x="660" y="271" text-anchor="middle" font-size="11" font-weight="600" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">Assign Field Worker</text>
+      <text x="660" y="286" text-anchor="middle" font-size="10" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">Update status → Resolved</text>
+
+      <line x1="495" y1="274" x2="558" y2="274" stroke="#185fa5" stroke-width="1.2" marker-end="url(#arr4)"/>
+
+      <!-- Status → citizen notified (arc back up) -->
+      <path d="M760 252 Q820 130 750 92" fill="none" stroke="#185fa5" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#arr4)"/>
+      <text x="815" y="180" text-anchor="middle" font-size="9" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">FCM</text>
+      <text x="815" y="193" text-anchor="middle" font-size="9" fill="#185fa5" font-family="Segoe UI,Arial,sans-serif">push</text>
+
+      <!-- Timeline label -->
+      <text x="430" y="325" text-anchor="middle" font-size="10" fill="#72716b" font-family="Segoe UI,Arial,sans-serif">⏱  Total latency: citizen submit → municipal alert ≈ 3–8 seconds (Firebase real-time)</text>
+    </svg>
+    <div class="diagram-caption">Fig 4. Issue Reporting Data Flow — swimlane diagram across all four actors.</div>
+  </div>
+</div>
+
+<!-- ─────────────── 06 DATABASE SCHEMA ─────────────── -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <span class="section-title">Database Schema (Firestore Collections)</span>
+  </div>
+
+  <p>Firestore is a document-oriented NoSQL store. Collections are designed for the most common read patterns — nearby spots, active reports, user points — with minimal cross-collection joins (handled in Cloud Functions where needed).</p>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 860 420" role="img">
+      <title>Firestore Collection Schema</title>
+      <desc>Six Firestore collections with their key fields shown as cards</desc>
+      <defs>
+        <marker id="arr5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- users collection -->
+      <rect x="20" y="20" width="190" height="170" rx="9" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <rect x="20" y="20" width="190" height="34" rx="9" fill="#534ab7"/>
+      <rect x="20" y="40" width="190" height="14" rx="0" fill="#534ab7"/>
+      <text x="115" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif">users</text>
+      <text x="30" y="70" font-size="10" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">uid: string (PK)</text>
+      <text x="30" y="86" font-size="10" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">displayName: string</text>
+      <text x="30" y="102" font-size="10" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">phone: string</text>
+      <text x="30" y="118" font-size="10" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">totalPoints: number</text>
+      <text x="30" y="134" font-size="10" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">streak: number</text>
+      <text x="30" y="150" font-size="10" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">badges: string[]</text>
+      <text x="30" y="166" font-size="10" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">role: citizen | municipal</text>
+      <text x="30" y="182" font-size="10" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">createdAt: timestamp</text>
+
+      <!-- spots collection -->
+      <rect x="230" y="20" width="190" height="190" rx="9" fill="#e1f5ee" stroke="#0f6e56" stroke-width="1"/>
+      <rect x="230" y="20" width="190" height="34" rx="9" fill="#0f6e56"/>
+      <rect x="230" y="40" width="190" height="14" rx="0" fill="#0f6e56"/>
+      <text x="325" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif">spots</text>
+      <text x="240" y="70" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">spotId: string (PK)</text>
+      <text x="240" y="86" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">name: string</text>
+      <text x="240" y="102" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">geopoint: GeoPoint</text>
+      <text x="240" y="118" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">geohash: string (index)</text>
+      <text x="240" y="134" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">adopterId: string FK</text>
+      <text x="240" y="150" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">status: clean|issue|resolved</text>
+      <text x="240" y="166" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">category: string</text>
+      <text x="240" y="182" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">lastCheckin: timestamp</text>
+      <text x="240" y="198" font-size="10" fill="#04342c" font-family="Segoe UI,Arial,sans-serif">checkinsCount: number</text>
+
+      <!-- reports collection -->
+      <rect x="440" y="20" width="195" height="210" rx="9" fill="#faece7" stroke="#993c1d" stroke-width="1"/>
+      <rect x="440" y="20" width="195" height="34" rx="9" fill="#993c1d"/>
+      <rect x="440" y="40" width="195" height="14" rx="0" fill="#993c1d"/>
+      <text x="537" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif">reports</text>
+      <text x="450" y="70" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">reportId: string (PK)</text>
+      <text x="450" y="86" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">spotId: string FK</text>
+      <text x="450" y="102" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">reporterId: string FK</text>
+      <text x="450" y="118" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">photoUrls: string[]</text>
+      <text x="450" y="134" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">issueType: string</text>
+      <text x="450" y="150" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">severity: low|med|high</text>
+      <text x="450" y="166" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">aiLabel: string</text>
+      <text x="450" y="182" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">status: open|progress|done</text>
+      <text x="450" y="198" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">assignedTo: string FK</text>
+      <text x="450" y="214" font-size="10" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">createdAt: timestamp</text>
+
+      <!-- checkins collection -->
+      <rect x="655" y="20" width="185" height="170" rx="9" fill="#faeeda" stroke="#854f0b" stroke-width="1"/>
+      <rect x="655" y="20" width="185" height="34" rx="9" fill="#854f0b"/>
+      <rect x="655" y="40" width="185" height="14" rx="0" fill="#854f0b"/>
+      <text x="747" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif">checkins</text>
+      <text x="665" y="70" font-size="10" fill="#412402" font-family="Segoe UI,Arial,sans-serif">checkinId: string (PK)</text>
+      <text x="665" y="86" font-size="10" fill="#412402" font-family="Segoe UI,Arial,sans-serif">userId: string FK</text>
+      <text x="665" y="102" font-size="10" fill="#412402" font-family="Segoe UI,Arial,sans-serif">spotId: string FK</text>
+      <text x="665" y="118" font-size="10" fill="#412402" font-family="Segoe UI,Arial,sans-serif">geopoint: GeoPoint</text>
+      <text x="665" y="134" font-size="10" fill="#412402" font-family="Segoe UI,Arial,sans-serif">pointsEarned: number</text>
+      <text x="665" y="150" font-size="10" fill="#412402" font-family="Segoe UI,Arial,sans-serif">timestamp: timestamp</text>
+      <text x="665" y="166" font-size="10" fill="#412402" font-family="Segoe UI,Arial,sans-serif">deviceId: string</text>
+
+      <!-- rewards collection -->
+      <rect x="20" y="250" width="190" height="155" rx="9" fill="#e6f1fb" stroke="#185fa5" stroke-width="1"/>
+      <rect x="20" y="250" width="190" height="34" rx="9" fill="#185fa5"/>
+      <rect x="20" y="270" width="190" height="14" rx="0" fill="#185fa5"/>
+      <text x="115" y="272" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif">rewards (coupons)</text>
+      <text x="30" y="300" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">rewardId: string (PK)</text>
+      <text x="30" y="316" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">businessId: string FK</text>
+      <text x="30" y="332" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">title: string</text>
+      <text x="30" y="348" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">pointsCost: number</text>
+      <text x="30" y="364" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">totalQty: number</text>
+      <text x="30" y="380" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">redeemedQty: number</text>
+      <text x="30" y="396" font-size="10" fill="#042c53" font-family="Segoe UI,Arial,sans-serif">expiresAt: timestamp</text>
+
+      <!-- leaderboard collection -->
+      <rect x="230" y="250" width="190" height="155" rx="9" fill="#eaf3de" stroke="#3b6d11" stroke-width="1"/>
+      <rect x="230" y="250" width="190" height="34" rx="9" fill="#3b6d11"/>
+      <rect x="230" y="270" width="190" height="14" rx="0" fill="#3b6d11"/>
+      <text x="325" y="272" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Segoe UI,Arial,sans-serif">leaderboard</text>
+      <text x="240" y="300" font-size="10" fill="#173404" font-family="Segoe UI,Arial,sans-serif">userId: string FK</text>
+      <text x="240" y="316" font-size="10" fill="#173404" font-family="Segoe UI,Arial,sans-serif">weekPoints: number</text>
+      <text x="240" y="332" font-size="10" fill="#173404" font-family="Segoe UI,Arial,sans-serif">monthPoints: number</text>
+      <text x="240" y="348" font-size="10" fill="#173404" font-family="Segoe UI,Arial,sans-serif">allTimePoints: number</text>
+      <text x="240" y="364" font-size="10" fill="#173404" font-family="Segoe UI,Arial,sans-serif">rank: number</text>
+      <text x="240" y="380" font-size="10" fill="#173404" font-family="Segoe UI,Arial,sans-serif">displayName: string</text>
+      <text x="240" y="396" font-size="10" fill="#173404" font-family="Segoe UI,Arial,sans-serif">updatedAt: timestamp</text>
+
+      <!-- FK arrows -->
+      <!-- users → spots (adopter) -->
+      <path d="M210 80 Q220 80 224 80" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr5)"/>
+      <!-- spots → reports -->
+      <path d="M420 130 Q424 130 438 130" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr5)"/>
+      <!-- users → checkins -->
+      <path d="M210 100 Q640 100 653 100" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr5)"/>
+      <!-- users → leaderboard -->
+      <path d="M115 190 Q115 240 228 300" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr5)"/>
+    </svg>
+    <div class="diagram-caption">Fig 5. Firestore Collection Schema — 6 collections, key fields, and foreign-key relationships (dashed arrows).</div>
+  </div>
+</div>
+
+<!-- ─────────────── 07 FEATURE MODULES ─────────────── -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <span class="section-title">Feature Modules</span>
+  </div>
+
+  <div class="feature-grid">
+    <div class="feature-card fc-green">
+      <h4>🗺️ Interactive Spot Map</h4>
+      <p>Google Maps SDK with clustered spot markers. Color-coded by status (green = clean, amber = issue reported, red = high priority). Tap any spot to see adoption status, last check-in time, and open reports. Geofence alerts when entering 100m of your adopted spot.</p>
+    </div>
+    <div class="feature-card fc-blue">
+      <h4>📌 Spot Adoption Flow</h4>
+      <p>Search or tap to adopt a free spot. One spot per citizen at a time (promotes fairness). 7-day cooldown after release. Adopter receives push notification if someone else reports an issue at their spot before them.</p>
+    </div>
+    <div class="feature-card fc-amber">
+      <h4>📸 Issue Report</h4>
+      <p>Tap "Report Issue" → Camera opens → Photo + auto-GPS stamp → Select category (Broken, Dirty, Overgrown, Safety Hazard, Other) → Submit. Gemini Flash auto-classifies severity in under 2 seconds. Citizen gets +25 points immediately.</p>
+    </div>
+    <div class="feature-card fc-coral">
+      <h4>✅ Check-in System</h4>
+      <p>GPS proximity check (must be within 100m). Daily limit of 2 check-ins per spot to prevent gaming. +10 points per check-in. Streak bonuses: 7-day streak = 50 bonus pts, 30-day = 200 bonus pts. Streak counter on profile screen.</p>
+    </div>
+    <div class="feature-card fc-purple">
+      <h4>🏆 Leaderboard</h4>
+      <p>Weekly, monthly, and all-time tabs. Ranks by total points in period. Top 3 get a special frame on their avatar. Opt-out option for privacy. Cloud Function recomputes rankings every hour using Firestore batch writes.</p>
+    </div>
+    <div class="feature-card fc-teal">
+      <h4>🎁 Rewards Store</h4>
+      <p>Business partners upload coupons (e.g. "20% off at Chai Wala, Sector 18"). Citizens browse by category, redeem points atomically. QR code generated for in-store scanning. Coupon expiry enforced server-side.</p>
+    </div>
+  </div>
+
+  <h3>Municipal Dashboard (Flutter Web)</h3>
+  <div class="card">
+    <table>
+      <tr><th>Feature</th><th>Description</th><th>Data Source</th></tr>
+      <tr><td>Real-time Heatmap</td><td>Density of open issues across the city. Color intensity = severity score.</td><td>Firestore <code>reports</code> collection</td></tr>
+      <tr><td>Issue Queue</td><td>Sorted list of open reports by priority. One-click assign to field worker.</td><td>Firestore query: status=open, orderBy severity</td></tr>
+      <tr><td>Field Worker Tracker</td><td>List of assigned workers and their active tasks. Status updates in real-time.</td><td>Firestore <code>reports.assignedTo</code></td></tr>
+      <tr><td>Analytics Dashboard</td><td>Weekly reports submitted, avg resolution time, top reporting citizens.</td><td>Firebase Analytics + Firestore aggregates</td></tr>
+      <tr><td>Spot Management</td><td>Add new spots, set categories, view adoption history.</td><td>Firestore <code>spots</code> collection (admin write)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ─────────────── 08 GAMIFICATION ENGINE ─────────────── -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <span class="section-title">Gamification Engine</span>
+  </div>
+
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 860 300" role="img">
+      <title>Points Engine diagram</title>
+      <desc>Points awarded for each citizen action, bonus multipliers, and redemption flow</desc>
+      <defs>
+        <marker id="arr6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Points Earn column -->
+      <text x="155" y="28" text-anchor="middle" font-size="11" font-weight="600" fill="#3b6d11" letter-spacing="0.07em" font-family="Segoe UI,Arial,sans-serif">EARN POINTS</text>
+      <rect x="20" y="38" width="270" height="240" rx="9" fill="#eaf3de" stroke="#3b6d11" stroke-width="0.8"/>
+
+      <rect x="35" y="52" width="240" height="36" rx="6" fill="#c0dd97" stroke="#3b6d11" stroke-width="0.6"/>
+      <text x="155" y="72" text-anchor="middle" font-size="12" fill="#173404" font-family="Segoe UI,Arial,sans-serif">Adopt a spot</text>
+      <text x="270" y="72" text-anchor="end" font-size="13" font-weight="700" fill="#27500a" font-family="Segoe UI,Arial,sans-serif">+50 pts</text>
+
+      <rect x="35" y="98" width="240" height="36" rx="6" fill="#c0dd97" stroke="#3b6d11" stroke-width="0.6"/>
+      <text x="155" y="118" text-anchor="middle" font-size="12" fill="#173404" font-family="Segoe UI,Arial,sans-serif">Daily check-in</text>
+      <text x="270" y="118" text-anchor="end" font-size="13" font-weight="700" fill="#27500a" font-family="Segoe UI,Arial,sans-serif">+10 pts</text>
+
+      <rect x="35" y="144" width="240" height="36" rx="6" fill="#c0dd97" stroke="#3b6d11" stroke-width="0.6"/>
+      <text x="155" y="164" text-anchor="middle" font-size="12" fill="#173404" font-family="Segoe UI,Arial,sans-serif">Submit issue report</text>
+      <text x="270" y="164" text-anchor="end" font-size="13" font-weight="700" fill="#27500a" font-family="Segoe UI,Arial,sans-serif">+25 pts</text>
+
+      <rect x="35" y="190" width="240" height="36" rx="6" fill="#97c459" stroke="#3b6d11" stroke-width="0.6"/>
+      <text x="155" y="210" text-anchor="middle" font-size="12" fill="#173404" font-family="Segoe UI,Arial,sans-serif">Issue resolved (bonus)</text>
+      <text x="270" y="210" text-anchor="end" font-size="13" font-weight="700" fill="#27500a" font-family="Segoe UI,Arial,sans-serif">+50 pts</text>
+
+      <rect x="35" y="236" width="240" height="36" rx="6" fill="#97c459" stroke="#3b6d11" stroke-width="0.6"/>
+      <text x="155" y="256" text-anchor="middle" font-size="12" fill="#173404" font-family="Segoe UI,Arial,sans-serif">7-day check-in streak</text>
+      <text x="270" y="256" text-anchor="end" font-size="13" font-weight="700" fill="#27500a" font-family="Segoe UI,Arial,sans-serif">+50 pts</text>
+
+      <!-- Points Wallet centre -->
+      <text x="450" y="28" text-anchor="middle" font-size="11" font-weight="600" fill="#534ab7" letter-spacing="0.07em" font-family="Segoe UI,Arial,sans-serif">POINTS WALLET</text>
+      <rect x="355" y="38" width="190" height="240" rx="12" fill="#eeedfe" stroke="#534ab7" stroke-width="1.2"/>
+      <text x="450" y="95" text-anchor="middle" font-size="11" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">Atomic Firestore</text>
+      <text x="450" y="113" text-anchor="middle" font-size="11" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">Transaction</text>
+      <text x="450" y="160" text-anchor="middle" font-size="40" font-weight="700" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">⭐</text>
+      <text x="450" y="210" text-anchor="middle" font-size="12" fill="#26215c" font-family="Segoe UI,Arial,sans-serif">wallets/{userId}</text>
+      <text x="450" y="228" text-anchor="middle" font-size="11" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">balance: number</text>
+      <text x="450" y="246" text-anchor="middle" font-size="11" fill="#534ab7" font-family="Segoe UI,Arial,sans-serif">lifetimeEarned: number</text>
+
+      <!-- Arrows earn → wallet -->
+      <line x1="291" y1="158" x2="353" y2="158" stroke="#3b6d11" stroke-width="1.5" marker-end="url(#arr6)"/>
+
+      <!-- Redeem column -->
+      <text x="690" y="28" text-anchor="middle" font-size="11" font-weight="600" fill="#993c1d" letter-spacing="0.07em" font-family="Segoe UI,Arial,sans-serif">REDEEM REWARDS</text>
+      <rect x="565" y="38" width="275" height="240" rx="9" fill="#faece7" stroke="#993c1d" stroke-width="0.8"/>
+
+      <rect x="580" y="52" width="245" height="36" rx="6" fill="#f5c4b3" stroke="#993c1d" stroke-width="0.6"/>
+      <text x="700" y="72" text-anchor="middle" font-size="12" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">Local café coupon</text>
+      <text x="580" y="72" text-anchor="start" font-size="10" fill="#993c1d" font-family="Segoe UI,Arial,sans-serif" x="584">100 pts</text>
+
+      <rect x="580" y="98" width="245" height="36" rx="6" fill="#f5c4b3" stroke="#993c1d" stroke-width="0.6"/>
+      <text x="700" y="118" text-anchor="middle" font-size="12" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">Grocery store 10% off</text>
+      <text x="584" y="118" font-size="10" fill="#993c1d" font-family="Segoe UI,Arial,sans-serif">200 pts</text>
+
+      <rect x="580" y="144" width="245" height="36" rx="6" fill="#f0997b" stroke="#993c1d" stroke-width="0.6"/>
+      <text x="700" y="164" text-anchor="middle" font-size="12" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">Free movie ticket</text>
+      <text x="584" y="164" font-size="10" fill="#993c1d" font-family="Segoe UI,Arial,sans-serif">500 pts</text>
+
+      <rect x="580" y="190" width="245" height="36" rx="6" fill="#f0997b" stroke="#993c1d" stroke-width="0.6"/>
+      <text x="700" y="210" text-anchor="middle" font-size="12" fill="#4a1b0c" font-family="Segoe UI,Arial,sans-serif">Municipal recognition cert</text>
+      <text x="584" y="210" font-size="10" fill="#993c1d" font-family="Segoe UI,Arial,sans-serif">1000 pts</text>
+
+      <rect x="580" y="236" width="245" height="36" rx="6" fill="#d85a30" stroke="#993c1d" stroke-width="0.6"/>
+      <text x="700" y="256" text-anchor="middle" font-size="12" fill="#fff" font-family="Segoe UI,Arial,sans-serif">Ward Civic Hero Award 🏅</text>
+      <text x="584" y="256" font-size="10" fill="#fff" font-family="Segoe UI,Arial,sans-serif">2500 pts</text>
+
+      <!-- Wallet → Redeem arrow -->
+      <line x1="545" y1="158" x2="563" y2="158" stroke="#993c1d" stroke-width="1.5" marker-end="url(#arr6)"/>
+    </svg>
+    <div class="diagram-caption">Fig 6. Gamification Points Engine — earn → wallet (atomic Firestore transaction) → redeem.</div>
+  </div>
+</div>
+
+<!-- ─────────────── 09 API CONTRACT ─────────────── -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <span class="section-title">API Contract (Cloud Functions HTTP Endpoints)</span>
+  </div>
+
+  <div class="card">
+    <table>
+      <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Body / Params</th><th>Response</th></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/adoptSpot</code></td><td>Bearer JWT</td><td><code>{ spotId }</code></td><td><code>{ success, pointsEarned: 50 }</code></td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/checkIn</code></td><td>Bearer JWT</td><td><code>{ spotId, lat, lng }</code></td><td><code>{ success, pointsEarned, streak }</code></td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/submitReport</code></td><td>Bearer JWT</td><td><code>{ spotId, photoUrls[], issueType, description }</code></td><td><code>{ reportId, aiLabel, severity, pointsEarned: 25 }</code></td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/redeemCoupon</code></td><td>Bearer JWT</td><td><code>{ rewardId }</code></td><td><code>{ couponCode, expiresAt, newBalance }</code></td></tr>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/nearbySpots</code></td><td>Bearer JWT</td><td><code>?lat=&lng=&radius=500</code></td><td><code>{ spots[] }</code></td></tr>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/leaderboard</code></td><td>Bearer JWT</td><td><code>?period=week|month|all</code></td><td><code>{ entries[], myRank }</code></td></tr>
+      <tr><td><span class="badge badge-amber">PATCH</span></td><td><code>/updateReportStatus</code></td><td>Municipal role</td><td><code>{ reportId, status, assignedTo }</code></td><td><code>{ success }</code></td></tr>
+    </table>
+  </div>
+
+  <h3>Key Flutter Packages</h3>
+  <div class="stack-pills">
+    <span class="stack-pill" style="background:var(--teal-bg);color:var(--teal);border-color:var(--teal)">flutter_bloc ^8</span>
+    <span class="stack-pill" style="background:var(--blue-bg);color:var(--blue);border-color:var(--blue)">firebase_core</span>
+    <span class="stack-pill" style="background:var(--blue-bg);color:var(--blue);border-color:var(--blue)">cloud_firestore</span>
+    <span class="stack-pill" style="background:var(--blue-bg);color:var(--blue);border-color:var(--blue)">firebase_auth</span>
+    <span class="stack-pill" style="background:var(--blue-bg);color:var(--blue);border-color:var(--blue)">firebase_storage</span>
+    <span class="stack-pill" style="background:var(--blue-bg);color:var(--blue);border-color:var(--blue)">firebase_messaging</span>
+    <span class="stack-pill" style="background:var(--green-bg);color:var(--green);border-color:var(--green)">google_maps_flutter</span>
+    <span class="stack-pill" style="background:var(--green-bg);color:var(--green);border-color:var(--green)">geolocator</span>
+    <span class="stack-pill" style="background:var(--green-bg);color:var(--green);border-color:var(--green)">image_picker</span>
+    <span class="stack-pill" style="background:var(--amber-bg);color:var(--amber);border-color:var(--amber)">get_it (DI)</span>
+    <span class="stack-pill" style="background:var(--amber-bg);color:var(--amber);border-color:var(--amber)">dartz (Either)</span>
+    <span class="stack-pill" style="background:var(--amber-bg);color:var(--amber);border-color:var(--amber)">equatable</span>
+    <span class="stack-pill" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple)">lottie (animations)</span>
+    <span class="stack-pill" style="background:var(--purple-bg);color:var(--purple);border-color:var(--purple)">qr_flutter</span>
+    <span class="stack-pill" style="background:var(--coral-bg);color:var(--coral);border-color:var(--coral)">flutter_dotenv</span>
+  </div>
+</div>
+
+<!-- ─────────────── 10 ROADMAP ─────────────── -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <span class="section-title">Development Roadmap (12 Weeks)</span>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--purple)">W1–2</div>
+      <div class="tl-content">
+        <strong>Foundation Sprint</strong>
+        <span>Firebase project setup · Auth (Google + Phone OTP) · Firestore schema init · Flutter project structure with BLoC + get_it · Google Maps integration · Basic spot map rendering · CI/CD with GitHub Actions</span>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--teal)">W3–4</div>
+      <div class="tl-content">
+        <strong>Core Spot Features</strong>
+        <span>Spot adoption flow · GPS proximity check-in · Check-in streak tracking · Basic points wallet · Cloud Functions: onSpotAdopt, onCheckIn · Unit tests for use cases</span>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--coral)">W5–6</div>
+      <div class="tl-content">
+        <strong>Issue Reporting + AI</strong>
+        <span>Camera + image upload to Cloud Storage · Report submission flow · Gemini Flash API integration for photo classification · Severity auto-labelling · Municipal alert via FCM · Report status tracker</span>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--green)">W7–8</div>
+      <div class="tl-content">
+        <strong>Gamification Layer</strong>
+        <span>Leaderboard (weekly/monthly/all-time) · Badges system · Rewards store UI · Coupon redemption with QR · Atomic points transactions · Lottie confetti on milestones</span>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--blue)">W9–10</div>
+      <div class="tl-content">
+        <strong>Municipal Dashboard + Polish</strong>
+        <span>Flutter Web admin panel · Real-time heatmap · Field worker assignment · Analytics charts · Push notification templates · Offline support (Firestore local cache) · Accessibility pass</span>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:var(--amber)">W11–12</div>
+      <div class="tl-content">
+        <strong>Testing + Launch Prep</strong>
+        <span>Widget + integration tests · Firebase App Check · Firestore security rules hardening · Performance profiling (60fps target) · Play Store / App Store submission · Pilot with 1 ward</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Success Metrics (Pilot KPIs)</h3>
+  <div class="card-grid">
+    <div class="card-sm"><div class="label">Avg response time</div><div class="value" style="color:var(--green)">48 hrs</div><div style="font-size:12px;color:var(--ink3);margin-top:4px">vs 2–3 weeks baseline</div></div>
+    <div class="card-sm"><div class="label">Monthly active users</div><div class="value" style="color:var(--blue)">500+</div><div style="font-size:12px;color:var(--ink3);margin-top:4px">per ward pilot</div></div>
+    <div class="card-sm"><div class="label">Check-in retention</div><div class="value" style="color:var(--amber)">60%</div><div style="font-size:12px;color:var(--ink3);margin-top:4px">D30 retention goal</div></div>
+    <div class="card-sm"><div class="label">Report accuracy</div><div class="value" style="color:var(--teal)">85%</div><div style="font-size:12px;color:var(--ink3);margin-top:4px">AI classification</div></div>
+  </div>
+
+  <div class="info-box green" style="margin-top:24px">
+    <strong>Note for SIH / Internship Submission:</strong> This project directly addresses India's Smart City Mission objectives — citizen participation, real-time urban management, and data-driven municipal governance. The Flutter + Firebase stack is battle-tested for civic apps (see SIH 2025 Swachh Nagar), and the AI triage layer differentiates Adopt-a-Spot from basic complaint portals.
+  </div>
+</div>
+
+</div><!-- end .page -->
+
+<div style="background:#1e2330;color:#6e7a9a;text-align:center;padding:20px;font-size:12px;margin-top:40px;">
+  Adopt-a-Spot Implementation Document · Shashvat Tripathi · NIET, Greater Noida · shashvattripathi97@gmail.com · June 2026
+</div>
+
+</body>
+</html>
